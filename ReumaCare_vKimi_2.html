@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ReumaCare | Soporte a la Decisión Clínica</title>
+    <meta name="description" content="Herramienta profesional de soporte para enfermería reumatológica">
+    
+    <!-- Fuentes e Iconos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        clinical: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a', 
+                        },
+                        accent: {
+                            500: '#0d9488', // Teal clinical
+                            600: '#0f766e',
+                            50: '#f0fdfa',
+                        },
+                        severity: {
+                            low: '#10b981', // Green
+                            mod: '#f59e0b', // Amber
+                            high: '#ef4444', // Red
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Ajustes UI */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .slide-over { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-checkbox:checked { background-color: #0d9488; border-color: #0d9488; }
+        
+        /* Interactive Number Strip */
+        .num-btn {
+            flex: 1;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
+        .num-btn:hover { 
+            background-color: #f1f5f9; 
+            border-color: #94a3b8; 
+        }
+        .num-btn.selected { 
+            background-color: #0d9488; 
+            color: white; 
+            border-color: #0f766e; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; pointer-events: none; transition: opacity 0.2s ease-in-out; }
+        .modal-enter-active { opacity: 1; pointer-events: auto; }
+        .modal-content-enter { transform: scale(0.95); opacity: 0; transition: transform 0.2s ease-out, opacity 0.2s ease-out; }
+        .modal-content-active { transform: scale(1); opacity: 1; }
+        .special-tab { color: #64748b; border-bottom: 2px solid transparent; }
+        .special-tab.active-stab { color: #0f172a; border-bottom-color: #0d9488; font-weight: 700; }
+        .special-tab:hover:not(.active-stab) { color: #334155; background: #f8fafc; }
+        @media (min-width: 768px) {
+            #app-views h1 { letter-spacing: -0.01em; }
+            #checklist-renderer .bg-white { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+        }
+    </style>
+</head>
+<body class="bg-clinical-50 text-clinical-800 antialiased h-screen flex overflow-hidden selection:bg-accent-500 selection:text-white">
+
+    <!-- WELCOME SCREEN (SPLASH) -->
+    <div id="welcome-screen" class="fixed inset-0 z-50 bg-clinical-50 flex flex-col items-center justify-center p-6 transition-transform duration-500">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-clinical-200 text-center">
+            <div class="flex justify-center mb-6">
+                <div class="p-4 bg-accent-50 rounded-full text-accent-600">
+                    <i data-lucide="activity" class="w-10 h-10"></i>
+                </div>
+            </div>
+            <h1 class="text-3xl font-bold text-clinical-900 mb-2">ReumaCare</h1>
+            <p class="text-xs text-clinical-500 uppercase tracking-widest font-semibold mb-8">Soporte Integral para la Consulta de Enfermería Reumatológica</p>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-sm font-medium text-clinical-700 mb-1">Nombre del Profesional</label>
+                    <input type="text" id="welcome-nurse" class="w-full p-3 border border-clinical-300 rounded-lg focus:ring-2 focus:ring-accent-500 outline-none" placeholder="Ej. Dña. Laura García">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-clinical-700 mb-1">Centro Hospitalario</label>
+                    <input type="text" id="welcome-hospital" class="w-full p-3 border border-clinical-300 rounded-lg focus:ring-2 focus:ring-accent-500 outline-none" placeholder="Ej. Hospital Universitario...">
+                </div>
+                <button onclick="startApp()" class="w-full py-3 mt-4 bg-clinical-900 text-white rounded-lg font-bold hover:bg-clinical-800 transition-colors shadow-lg transform active:scale-95 flex items-center justify-center gap-2">
+                    Iniciar Consulta <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-clinical-400 mt-6">Los datos se guardarán localmente para futuros informes.</p>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="w-72 bg-white border-r border-clinical-200 flex flex-col justify-between shadow-sm z-20 hidden md:flex">
+        <div>
+            <!-- Header Logo Limpio -->
+            <button onclick="goToHome()" class="h-16 w-full flex items-center px-6 border-b border-clinical-100 hover:bg-clinical-50 transition-colors text-left focus:outline-none">
+                <div class="flex items-center gap-2 text-clinical-900 font-bold text-lg">
+                    <i data-lucide="activity" class="text-accent-500"></i>
+                    <span>ReumaCare</span>
+                </div>
+            </button>
+            
+            <div class="p-4 space-y-1 border-b border-clinical-100">
+                <button onclick="goToHome()" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-clinical-600 hover:bg-clinical-50 hover:text-clinical-900 transition-colors focus:outline-none">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    Inicio
+                </button>
+                <div id="sidebar-info" class="px-3 py-2 text-xs text-clinical-400">
+                    <!-- Se llena dinámicamente con Nurse/Hospital -->
+                </div>
+            </div>
+
+            <div class="p-5">
+                <div class="text-xs font-semibold text-clinical-400 uppercase tracking-wider mb-4">Paciente Actual</div>
+                
+                <!-- Campos de Identificación -->
+                <div class="mb-3">
+                    <label class="block text-xs text-clinical-500 mb-1">Nombre (Opcional)</label>
+                    <input type="text" id="patient-name-input" class="w-full text-sm p-1 border-b border-clinical-300 focus:border-accent-500 outline-none bg-transparent placeholder-clinical-300" placeholder="Nombre y Apellidos" oninput="currentPatient.name = this.value;">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs text-clinical-500 mb-1">ID / NHC (Opcional)</label>
+                    <input type="text" id="patient-id-input" class="w-full text-sm p-1 border-b border-clinical-300 focus:border-accent-500 outline-none bg-transparent placeholder-clinical-300" placeholder="Número de Historia" oninput="currentPatient.id = this.value;">
+                </div>
+
+                <div id="sidebar-context" class="space-y-4 opacity-50 transition-opacity duration-300">
+                    <div>
+                        <label class="block text-xs text-clinical-500 mb-1">Patología</label>
+                        <div id="ctx-pathology" class="font-medium text-clinical-800 text-sm">Seleccionar...</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-clinical-500 mb-1">Tipo de Visita</label>
+                        <div id="ctx-visit" class="font-medium text-clinical-800 text-sm">Seleccionar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-clinical-100 bg-clinical-50 space-y-2">
+            <button onclick="generateTXTReport()" id="btn-txt-side" disabled class="w-full h-10 flex items-center justify-center gap-2 px-4 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="clipboard-copy" class="w-4 h-4"></i>
+                Copiar Informe TXT
+            </button>
+            <button onclick="exportToPDF()" id="btn-pdf-side" disabled class="w-full h-10 flex items-center justify-center gap-2 px-4 bg-white border border-clinical-300 rounded-lg text-sm font-medium text-clinical-700 hover:bg-clinical-50 hover:text-clinical-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Exportar PDF
+            </button>
+            <button onclick="openSpecialSituations()" class="w-full h-10 flex items-center justify-center gap-2 px-4 bg-white border border-clinical-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50 hover:text-red-800 transition-colors">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
+                Situaciones Especiales
+            </button>
+            <button onclick="triggerReset()" class="w-full h-10 flex items-center justify-center gap-2 px-4 bg-red-50 border border-red-100 rounded-lg text-sm font-medium text-red-700 hover:bg-red-100 transition-colors mt-4">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Nuevo Paciente
+            </button>
+        </div>
+    </aside>
+
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden fixed top-0 w-full bg-white border-b border-clinical-200 z-30 px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2 font-bold text-clinical-900" onclick="goToHome()">
+            <i data-lucide="activity" class="text-accent-500"></i>
+            <span>ReumaCare</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openSpecialSituations()" class="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Situaciones Especiales">
+                <i data-lucide="alert-circle"></i>
+            </button>
+            <button onclick="triggerReset()" class="p-2 text-clinical-600">
+                <i data-lucide="user-plus"></i>
+            </button>
+        </div>
+    </div>
+    
+
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto relative bg-clinical-50 pt-16 md:pt-0">
+        <div class="max-w-5xl mx-auto p-5 md:p-8 pb-24">
+            <div id="app-views">
+                
+                <!-- VIEW 1: PATHOLOGY -->
+                <div id="view-pathology" class="view-section fade-in">
+                    <h1 class="text-2xl md:text-3xl font-bold text-clinical-900 mb-2">Selección de Patología</h1>
+                    <p class="text-clinical-500 mb-6 text-base md:text-lg">Inicie el protocolo seleccionando el diagnóstico principal.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="selectPathology('EA')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-accent-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">🦴</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Espondiloartritis Axial</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Columna vertebral y sacroilíacas</p>
+                        </button>
+                        <button onclick="selectPathology('APs')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-accent-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">🦵</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Artritis Psoriásica</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Artropatía y psoriasis asociada</p>
+                        </button>
+                        <button onclick="selectPathology('AR')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-accent-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">🤲</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Artritis Reumatoide</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Poliartritis simétrica erosiva</p>
+                        </button>
+                        <button onclick="selectPathology('LES')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-accent-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">🦋</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Lupus Eritematoso</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Enfermedad autoinmune sistémica</p>
+                        </button>
+                        <button onclick="selectPathology('VAC')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-blue-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-blue-100 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors text-2xl">💉</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-blue-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Vacunación</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Control vacunal en pacientes inmunosuprimidos</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: VISIT TYPE -->
+                <div id="view-visit" class="view-section hidden fade-in">
+                    <button onclick="goToView('pathology')" class="text-sm text-clinical-500 hover:text-accent-500 mb-4 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a selección</button>
+                    <h1 class="text-2xl md:text-3xl font-bold text-clinical-900 mb-2">Motivo de Consulta</h1>
+                    <p class="text-clinical-500 mb-6 text-base md:text-lg">Defina el objetivo de la intervención enfermera.</p>
+                    <div class="space-y-3">
+                        <button onclick="selectVisitType('inicio')" class="w-full flex items-center p-4 bg-white rounded-lg border border-clinical-200 hover:bg-clinical-50 hover:border-accent-500 transition-all text-left group">
+                            <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mr-4 group-hover:bg-blue-600 group-hover:text-white transition-colors"><i data-lucide="flag" class="w-5 h-5"></i></div>
+                            <div><h4 class="font-bold text-clinical-800">Inicio de Enfermedad / Tratamiento</h4><p class="text-sm text-clinical-500">Primera visita o confirmación diagnóstica.</p></div>
+                        </button>
+                        <button onclick="selectVisitType('educacion')" class="w-full flex items-center p-4 bg-white rounded-lg border border-clinical-200 hover:bg-clinical-50 hover:border-accent-500 transition-all text-left group">
+                            <div class="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mr-4 group-hover:bg-purple-600 group-hover:text-white transition-colors"><i data-lucide="book-open" class="w-5 h-5"></i></div>
+                            <div><h4 class="font-bold text-clinical-800">Educación Terapéutica</h4><p class="text-sm text-clinical-500">Formación sobre tratamiento prescrito.</p></div>
+                        </button>
+                        <button onclick="selectVisitType('postinicio')" class="w-full flex items-center p-4 bg-white rounded-lg border border-clinical-200 hover:bg-clinical-50 hover:border-accent-500 transition-all text-left group">
+                            <div class="h-10 w-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center mr-4 group-hover:bg-green-600 group-hover:text-white transition-colors"><i data-lucide="phone" class="w-5 h-5"></i></div>
+                            <div><h4 class="font-bold text-clinical-800">Seguimiento Telefónico (6 Semanas)</h4><p class="text-sm text-clinical-500">Control post-inicio biológico.</p></div>
+                        </button>
+                        <button onclick="selectVisitType('seguimiento')" class="w-full flex items-center p-4 bg-white rounded-lg border border-clinical-200 hover:bg-clinical-50 hover:border-accent-500 transition-all text-left group">
+                            <div class="h-10 w-10 rounded-full bg-clinical-100 text-clinical-600 flex items-center justify-center mr-4 group-hover:bg-clinical-600 group-hover:text-white transition-colors"><i data-lucide="clipboard-list" class="w-5 h-5"></i></div>
+                            <div><h4 class="font-bold text-clinical-800">Seguimiento Regular</h4><p class="text-sm text-clinical-500">Control rutinario semestral.</p></div>
+                        </button>
+                        <button onclick="selectVisitType('brote')" class="w-full flex items-center p-4 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 hover:border-red-400 transition-all text-left group">
+                            <div class="h-10 w-10 rounded-full bg-white text-red-600 flex items-center justify-center mr-4 shadow-sm"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
+                            <div><h4 class="font-bold text-red-800">Atención de Brote</h4><p class="text-sm text-red-600">Empeoramiento o crisis de la enfermedad.</p></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: CONTENT -->
+                <div id="view-content" class="view-section hidden fade-in">
+                    <button onclick="goToView('visit')" class="text-sm text-clinical-500 hover:text-accent-500 mb-4 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a tipos de visita</button>
+                    <div class="flex items-center justify-between mb-5">
+                        <h1 id="content-header-title" class="text-xl md:text-2xl font-bold text-clinical-900">Protocolo Activo</h1>
+                        <span id="content-duration" class="px-3 py-1 bg-clinical-100 text-clinical-600 rounded-full text-xs font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> <span id="dur-text"></span></span>
+                    </div>
+                    <div id="alerts-area" class="space-y-3 mb-6"></div>
+                    <div id="checklist-renderer" class="space-y-6"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SLIDE-OVER CALCULATOR -->
+    <div id="slide-over-backdrop" class="fixed inset-0 bg-clinical-900/20 backdrop-blur-sm z-40 hidden transition-opacity" onclick="closeCalculator()"></div>
+    <div id="calculator-panel" class="fixed top-0 right-0 h-full w-full md:w-[680px] bg-white shadow-2xl transform translate-x-full slide-over z-50 flex flex-col">
+        <div class="p-4 border-b border-clinical-200 flex items-center justify-between bg-clinical-50">
+            <h3 class="font-bold text-lg text-clinical-800 flex items-center gap-2"><i data-lucide="calculator" class="text-accent-500"></i><span id="calc-title">Calculadora</span></h3>
+            <button onclick="closeCalculator()" class="p-2 text-clinical-400 hover:text-clinical-700 rounded-full hover:bg-clinical-200"><i data-lucide="x"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6" id="calc-body"></div>
+        <div class="p-4 border-t border-clinical-200 bg-clinical-50">
+            <button onclick="performCalculation()" class="w-full py-3 bg-clinical-900 text-white rounded-lg font-medium hover:bg-clinical-800 transition-all flex items-center justify-center gap-2">Calcular y Guardar <i data-lucide="check" class="w-4 h-4"></i></button>
+            <div id="calc-result-display" class="mt-3 hidden p-4 rounded-lg text-center font-bold text-lg border"></div>
+        </div>
+    </div>
+
+    <!-- SPECIAL SITUATIONS PANEL -->
+    <div id="special-situations-backdrop" class="fixed inset-0 bg-clinical-900/20 backdrop-blur-sm z-40 hidden transition-opacity" onclick="closeSpecialSituations()"></div>
+    <div id="special-situations-panel" class="fixed top-0 right-0 h-full w-full md:w-[760px] bg-white shadow-2xl transform translate-x-full slide-over z-50 flex flex-col">
+        <div class="p-4 border-b border-red-200 flex items-center justify-between bg-red-50">
+            <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i data-lucide="alert-circle" class="text-red-600"></i>Situaciones Especiales</h3>
+            <button onclick="closeSpecialSituations()" class="p-2 text-red-400 hover:text-red-700 rounded-full hover:bg-red-200"><i data-lucide="x"></i></button>
+        </div>
+        <div class="flex border-b border-clinical-200 bg-white overflow-x-auto sticky top-0 z-10">
+            <button onclick="showSpecialTab('inf')" id="stab-inf" class="special-tab px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"><i data-lucide="shield-alert" class="w-4 h-4"></i>Infecciones</button>
+            <button onclick="showSpecialTab('emb')" id="stab-emb" class="special-tab px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"><i data-lucide="heart" class="w-4 h-4"></i>Embarazo</button>
+            <button onclick="showSpecialTab('cir')" id="stab-cir" class="special-tab px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"><i data-lucide="scissors" class="w-4 h-4"></i>Cirugía</button>
+            <button onclick="showSpecialTab('car')" id="stab-car" class="special-tab px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i>Cardiovascular</button>
+        </div>
+        <div id="special-content" class="flex-1 overflow-y-auto p-6 text-sm leading-relaxed text-clinical-700"></div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="confirmation-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-enter">
+        <div class="absolute inset-0 bg-clinical-900/40 backdrop-blur-sm transition-opacity"></div>
+        <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-clinical-200 modal-content-enter">
+            <div class="p-6">
+                <h3 id="modal-title" class="text-lg font-bold text-clinical-900 flex items-center gap-2 mb-2"><i data-lucide="alert-triangle" class="text-amber-500 w-5 h-5"></i> Confirmar Acción</h3>
+                <p id="modal-message" class="text-clinical-600 text-sm leading-relaxed"></p>
+            </div>
+            <div class="bg-clinical-50 px-6 py-4 flex justify-end gap-3 border-t border-clinical-100">
+                <button onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-clinical-600 hover:text-clinical-800 hover:bg-clinical-200 rounded-lg">Cancelar</button>
+                <button id="modal-confirm-btn" class="px-4 py-2 text-sm font-medium text-white bg-clinical-900 hover:bg-clinical-800 rounded-lg shadow-sm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-clinical-900 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all z-50 flex items-center gap-3">
+        <i id="toast-icon" data-lucide="check-circle" class="text-accent-500"></i>
+        <span id="toast-message">Acción completada</span>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        let currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+        let sessionSettings = { nurse: '', hospital: '' }; // Datos de sesión
+        
+        const pathologyData = {
+            'EA': { name: 'Espondiloartritis Axial', icon: 'activity' },
+            'APs': { name: 'Artritis Psoriásica', icon: 'layers' },
+            'AR': { name: 'Artritis Reumatoide', icon: 'network' },
+            'LES': { name: 'Lupus Eritematoso', icon: 'sparkles' },
+            'VAC': { name: 'Vacunación', icon: 'shield-check' }
+        };
+        const visitData = {
+            'inicio': 'Inicio de Enfermedad',
+            'educacion': 'Educación Terapéutica',
+            'postinicio': 'Seguimiento Telefónico (6 sem)',
+            'seguimiento': 'Seguimiento Regular',
+            'brote': 'Atención de Brote',
+            'vacunacion': 'Control Vacunal'
+        };
+
+        // --- CORE FUNCTIONS ---
+        document.addEventListener('DOMContentLoaded', () => { 
+            lucide.createIcons(); 
+            checkWelcome(); // Comprobar si mostramos bienvenida
+            loadState(); 
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                const calcOpen = !document.getElementById('calculator-panel').classList.contains('translate-x-full');
+                const specialOpen = !document.getElementById('special-situations-panel').classList.contains('translate-x-full');
+                const modalOpen = !document.getElementById('confirmation-modal').classList.contains('hidden');
+                if (modalOpen) closeModal();
+                else if (calcOpen) closeCalculator();
+                else if (specialOpen) closeSpecialSituations();
+            });
+        });
+
+        // --- WELCOME SCREEN LOGIC ---
+        function checkWelcome() {
+            // Limpiar datos antiguos de pacientes al iniciar
+            localStorage.removeItem('reuma_state_v3');
+            localStorage.removeItem('reuma_patient');
+            
+            const savedSettings = localStorage.getItem('reuma_settings');
+            if (savedSettings) {
+                sessionSettings = JSON.parse(savedSettings);
+                document.getElementById('welcome-nurse').value = sessionSettings.nurse;
+                document.getElementById('welcome-hospital').value = sessionSettings.hospital;
+            }
+            // Asegurar que siempre inicie en página de inicio
+            currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+            goToView('pathology');
+        }
+
+        function startApp() {
+            const nurse = document.getElementById('welcome-nurse').value;
+            const hospital = document.getElementById('welcome-hospital').value;
+            
+            if (!nurse || !hospital) {
+                alert("Por favor, introduzca sus datos para configurar los informes.");
+                return;
+            }
+
+            sessionSettings = { nurse, hospital };
+            localStorage.setItem('reuma_settings', JSON.stringify(sessionSettings));
+            
+            // Ocultar Splash
+            const splash = document.getElementById('welcome-screen');
+            splash.classList.add('-translate-y-full'); // Animación salida hacia arriba
+            
+            // Actualizar Sidebar Info
+            updateSidebarInfo();
+        }
+
+        function updateSidebarInfo() {
+            const infoDiv = document.getElementById('sidebar-info');
+            infoDiv.innerHTML = `
+                <div class="flex flex-col gap-1 mt-2 pt-2 border-t border-clinical-100">
+                    <span class="font-semibold text-clinical-600 truncate">${sessionSettings.nurse}</span>
+                    <span class="text-[10px] text-clinical-400 truncate">${sessionSettings.hospital}</span>
+                </div>
+            `;
+        }
+
+        // --- APP NAVIGATION ---
+        function selectPathology(code) {
+            currentPatient.pathology = code;
+            currentPatient.pathologyName = pathologyData[code].name;
+            // NO auto-save - manual save only
+            // Si es vacunación, ir directamente al contenido (no tiene tipos de visita)
+            if (code === 'VAC') {
+                currentPatient.visitType = 'vacunacion';
+                currentPatient.visitName = 'Control Vacunal';
+                loadChecklistContent();
+                goToView('content');
+                enableSideActions(true);
+            } else {
+                goToView('visit');
+            }
+            updateSidebarContext();
+        }
+
+        function selectVisitType(type) {
+            currentPatient.visitType = type;
+            currentPatient.visitName = visitData[type];
+            currentPatient.scores = {}; currentPatient.alerts = [];
+            // NO auto-save - manual save only
+            loadChecklistContent();
+            goToView('content');
+            updateSidebarContext();
+            enableSideActions(true);
+        }
+
+        function goToView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`view-${viewId}`);
+            if(target) { target.classList.remove('hidden'); document.querySelector('main').scrollTop = 0; }
+            lucide.createIcons();
+        }
+        function goToHome() { goToView('pathology'); }
+
+        function updateSidebarContext() {
+            const pathEl = document.getElementById('ctx-pathology');
+            const visitEl = document.getElementById('ctx-visit');
+            const container = document.getElementById('sidebar-context');
+            if (currentPatient.pathology) { container.classList.remove('opacity-50'); pathEl.textContent = pathologyData[currentPatient.pathology].name; } 
+            else { container.classList.add('opacity-50'); pathEl.textContent = 'Seleccionar...'; }
+            visitEl.textContent = currentPatient.visitType ? (visitData[currentPatient.visitType] || currentPatient.visitName || 'Seleccionar...') : 'Seleccionar...';
+            
+            const idInput = document.getElementById('patient-id-input');
+            const nameInput = document.getElementById('patient-name-input');
+            if(idInput && currentPatient.id) idInput.value = currentPatient.id;
+            if(nameInput && currentPatient.name) nameInput.value = currentPatient.name;
+        }
+
+        function enableSideActions(enable) {
+            document.getElementById('btn-txt-side').disabled = !enable;
+            document.getElementById('btn-pdf-side').disabled = !enable;
+        }
+
+        // --- CONTENT RENDERER & HELPER FUNCTIONS ---
+        // Helper functions defined here to avoid ReferenceError
+        function getLivingWithDisease() {
+            const advice = {
+                'EA': 'Importancia del ejercicio diario, mantener buena postura, evitar sedentarismo',
+                'APs': 'Cuidado de piel y articulaciones, control del peso, manejo del estrés',
+                'AR': 'Protección articular, ejercicios de movilidad, adaptación actividades diarias',
+                'LES': 'Fotoprotección estricta, prevención infecciones, manejo fatiga'
+            };
+            return advice[currentPatient.pathology] || 'Adaptaciones específicas según patología';
+        }
+
+        function getPrecautions() {
+            const precautions = {
+                'EA': 'Evitar traumatismos, mantener actividad física',
+                'APs': 'Control peso, cuidado piel, evitar traumatismos',
+                'AR': 'Anticoncepción si MTX, evitar infecciones',
+                'LES': 'Fotoprotección, anticoncepción, evitar infecciones'
+            };
+            return precautions[currentPatient.pathology] || 'Según medicación prescrita';
+        }
+
+        function getAlarmSigns() {
+            const signs = {
+                'EA': 'Dolor torácico, uveítis, síntomas neurológicos',
+                'APs': 'Articulación caliente+fiebre, dactilitis severa, eritrodermia',
+                'AR': 'Fiebre+artritis, deformidad aguda, síntomas sistémicos',
+                'LES': 'Convulsiones, confusión, disnea, edemas, hematuria'
+            };
+            return signs[currentPatient.pathology] || 'Signos específicos de gravedad';
+        }
+
+        function loadChecklistContent() {
+            const container = document.getElementById('checklist-renderer');
+            const title = document.getElementById('content-header-title');
+            const dur = document.getElementById('dur-text');
+            
+            if(!title || !container) return;
+            title.textContent = `${pathologyData[currentPatient.pathology].name} - ${(visitData[currentPatient.visitType] || currentPatient.visitName || '')}`;
+            
+            let html = '';
+            let duration = '30 min';
+            
+            if (currentPatient.visitType === 'inicio') { html = getInicioTemplate(); duration = '45 min'; }
+            else if (currentPatient.visitType === 'educacion') { html = getEducacionTemplate(); duration = '30 min'; }
+            else if (currentPatient.visitType === 'postinicio') { html = getPostInicioTemplate(); duration = '20-25 min'; }
+            else if (currentPatient.visitType === 'seguimiento') { html = getSeguimientoTemplate(); duration = '20-30 min'; }
+            else if (currentPatient.visitType === 'brote') { html = getBroteTemplate(); duration = 'Variable'; }
+            else if (currentPatient.visitType === 'vacunacion') { html = getVacunacionTemplate(); duration = '15-20 min'; }
+            
+            dur.textContent = duration;
+            container.innerHTML = html;
+            
+            // Restore State
+            Object.keys(currentPatient.checklist).forEach(id => { const cb = document.getElementById(id); if (cb) cb.checked = currentPatient.checklist[id]; });
+            const evaInput = document.getElementById('eva-input');
+            if (evaInput) {
+                updateIntegerSelect('eva', currentPatient.eva || 0);
+            }
+            lucide.createIcons();
+        }
+
+        // --- COMPONENTS ---
+        function createSection(title, icon, items) {
+            return `<div class="bg-white rounded-xl border border-clinical-200 shadow-sm overflow-hidden"><div class="bg-clinical-50 px-5 py-3 border-b border-clinical-100 flex items-center gap-2"><i data-lucide="${icon}" class="text-clinical-500 w-5 h-5"></i><h3 class="font-semibold text-base text-clinical-800">${title}</h3></div><div class="p-5 space-y-3">${items}</div></div>`;
+        }
+        function createCheckbox(id, label) {
+            return `<label class="flex items-start gap-3 py-0.5 cursor-pointer group"><div class="relative flex items-center"><input type="checkbox" id="${id}" onchange="toggleCheck('${id}')" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-clinical-300 shadow-sm transition-all checked:border-accent-500 checked:bg-accent-500 hover:border-accent-400 focus:ring-2 focus:ring-accent-200 focus:ring-offset-1"><i data-lucide="check" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"></i></div><div class="flex-1"><span class="text-sm leading-5 text-clinical-700 group-hover:text-clinical-900 transition-colors">${label}</span></div></label>`;
+        }
+        function createCalcButton(calcType, label) {
+            const hasScore = currentPatient.scores[calcType.toUpperCase()] !== undefined;
+            const scoreVal = hasScore ? currentPatient.scores[calcType.toUpperCase()] : '';
+            const statusClass = hasScore ? 'bg-accent-50 text-accent-700 border-accent-200' : 'bg-clinical-50 text-clinical-600 border-clinical-200 hover:border-accent-400';
+            const checkId = `check_calc_${calcType}`; 
+            return `<div class="flex items-center gap-2"><input type="checkbox" id="${checkId}" class="hidden" ${hasScore ? 'checked' : ''}><button onclick="openCalculator('${calcType}')" class="mt-1.5 flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all w-full md:w-auto ${statusClass}"><i data-lucide="calculator" class="w-4 h-4"></i><span>${label}</span>${hasScore ? `<span class="ml-2 font-bold">${scoreVal}</span>` : ''}</button></div>`;
+        }
+
+        // --- TEMPLATES ---
+        function getInicioTemplate() {
+            let calcs = '';
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI');
+            else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('haq', 'Calcular HAQ-DI');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K');
+
+            return `
+                ${createSection('Valoración Inicial Enfermera', 'clipboard-check', `
+                    ${createCheckbox('val1', 'Completar datos de identificación (nombre, NUHSA, teléfono)')}
+                    ${createCheckbox('val2', 'Confirmar diagnóstico principal y fecha')}
+                    ${createCheckbox('val3', 'Revisar antecedentes personales (HTA, DM, dislipemia, tabaco, alergias)')}
+                    ${createCheckbox('val4', 'Registrar tratamiento actual (FAMEs, biológicos, corticoides)')}
+                    <div class="pt-2 pb-2">
+                        <label class="text-sm font-medium text-clinical-700 block mb-2">Valorar dolor (EVA 0-10)</label>
+                        ${createIntegerSelector('eva', null, 0, 10, 'updateEVA')}
+                    </div>
+                    <div><span class="text-sm font-medium text-clinical-700 block mb-2">Índices de Actividad:</span>${calcs}</div>
+                `)}
+                ${createSection('Educación en Salud', 'book-open', `
+                    ${createCheckbox('edu1', `Explicar qué es ${currentPatient.pathologyName}`)}
+                    ${createCheckbox('edu2', 'Informar que NO es contagioso y que hay tratamientos efectivos')}
+                    ${createCheckbox('edu3', `Explicar cómo vivir con la enfermedad: ${getLivingWithDisease()}`)}
+                    ${createCheckbox('edu4', 'Importancia del ejercicio físico regular y adaptado')}
+                    ${createCheckbox('edu5', 'Signos de alarma: cuándo contactar con el servicio')}
+                `)}
+            `;
+        }
+
+        // ... (Similar logic for other templates, keeping it concise for file limit)
+        function getPathologyEducationItems() {
+            const content = {
+                'EA': [
+                    'Ejercicio aeróbico diario: marcha, bici o piscina (>=30 min/día)',
+                    'Higiene postural: evitar flexión mantenida; alternar posiciones cada 30-45 min',
+                    'Fisioterapia activa: la movilización regular reduce rigidez y dolor',
+                    'Evitar reposo prolongado salvo brote agudo'
+                ],
+                'AR': [
+                    'Protección articular: distribuir cargas en articulaciones grandes',
+                    'Ejercicio adaptado sin impacto para fuerza y movilidad',
+                    'Uso de ayudas técnicas (abridores, mangos engrosados, ortesis)',
+                    'Calor local para rigidez; frío local si inflamación activa'
+                ],
+                'APs': [
+                    'Cuidado de piel diario con hidratación y evitar traumatismos cutáneos',
+                    'Control ponderal: reducir peso mejora carga articular e inflamación',
+                    'Ejercicio regular y trabajo de movilidad de manos/pies',
+                    'Fotoprotección y vigilancia de lesiones nuevas'
+                ],
+                'LES': [
+                    'Fotoprotección estricta (FPS alto, ropa protectora y evitar horas centrales)',
+                    'Identificar desencadenantes: infecciones, estrés, exposición solar',
+                    'Planificación familiar y anticoncepción compatible con tratamiento',
+                    'No suspender hidroxicloroquina sin indicación médica'
+                ]
+            };
+            const items = content[currentPatient.pathology] || [];
+            return items.map((txt, i) => createCheckbox(`edu_path_${i}`, txt)).join('');
+        }
+
+        function getEducacionTemplate() {
+             return `
+                ${createSection('Información sobre el Fármaco Prescrito', 'pill', `
+                    ${createCheckbox('farm1', 'Explicar qué medicamento se ha prescrito y para qué sirve')}
+                    ${createCheckbox('farm2', 'Dónde recoger la medicación (farmacia hospitalaria/oficina)')}
+                    ${createCheckbox('farm3', 'Horario y procedimiento de recogida')}
+                `)}
+                ${createSection('Administración del Tratamiento', 'syringe', `
+                    ${createCheckbox('admin1', 'Demostrar técnica de administración (si es inyectable)')}
+                    ${createCheckbox('admin2', 'Explicar frecuencia y horario de administración')}
+                    ${createCheckbox('admin3', 'Enseñar rotación de puntos de inyección (si aplica)')}
+                    ${createCheckbox('admin4', 'Conservación del medicamento (nevera, temperatura ambiente)')}
+                `)}
+                ${createSection('Efectos Adversos y Precauciones', 'alert-circle', `
+                    ${createCheckbox('efec1', 'Explicar efectos secundarios más frecuentes')}
+                    ${createCheckbox('efec2', 'Qué hacer si aparecen efectos adversos leves')}
+                    ${createCheckbox('efec3', 'Signos de alarma que requieren contacto urgente')}
+                    ${createCheckbox('efec4', `Precauciones especiales: ${getPrecautions()}`)}
+                `)}
+                ${createSection('Información Específica por Fármaco', 'book-medical', getEducacionFarmacosTemplate())}
+                ${createSection(`Educación Específica: ${currentPatient.pathologyName || ''}`, 'star', getPathologyEducationItems())}
+                ${createSection('Expectativas y Adherencia', 'trending-up', `
+                    ${createCheckbox('mej1', 'Explicar ritmo esperado de mejoría (semanas/meses)')}
+                    ${createCheckbox('mej2', 'Importancia de no abandonar aunque no haya mejoría inmediata')}
+                    ${createCheckbox('adh1', 'Explicar importancia de adherencia >95%')}
+                    ${createCheckbox('adh2', 'Estrategias para no olvidar dosis (alarmas, apps)')}
+                    ${createCheckbox('adh3', 'Qué hacer si olvida una dosis')}
+                    ${createCheckbox('adh4', 'Consecuencias de abandonar el tratamiento')}
+                `)}
+            `;
+        }
+
+        function getEducacionFarmacosTemplate() {
+            // Template educación por clase de fármaco (genéricos)
+            const antiTNF = `
+                <div class="bg-red-50 p-3 rounded border border-red-100 mb-3">
+                    <h5 class="font-bold text-red-700 text-sm mb-2">Anti-TNF (adalimumab, etanercept, infliximab, golimumab)</h5>
+                    ${createCheckbox('edu_tnf_1', 'Reacciones en sitio de inyección: dolor, enrojecimiento, hinchazón')}
+                    ${createCheckbox('edu_tnf_2', 'Riesgo de infecciones: evitar contacto con enfermos')}
+                    ${createCheckbox('edu_tnf_3', 'Activación/reactivación de tuberculosis: screening previo obligatorio')}
+                    ${createCheckbox('edu_tnf_4', 'Riesgo de hepatotoxicidad: controles analíticos periódicos')}
+                    ${createCheckbox('edu_tnf_5', 'Descompensación de insuficiencia cardíaca: contraindicado si FEVI <40%')}
+                </div>`;
+            
+            const antiIL17 = `
+                <div class="bg-orange-50 p-3 rounded border border-orange-100 mb-3">
+                    <h5 class="font-bold text-orange-700 text-sm mb-2">Anti-IL17 (secukinumab, ixekizumab)</h5>
+                    ${createCheckbox('edu_il17_1', 'Candidiasis (infecciones micóticas): boca, piel, genital')}
+                    ${createCheckbox('edu_il17_2', 'Diarrea: informar si persistente o con sangre')}
+                    ${createCheckbox('edu_il17_3', 'Evitar si enfermedad inflamatoria intestinal activa')}
+                    ${createCheckbox('edu_il17_4', 'Controles periódicos de transaminasas')}
+                </div>`;
+            
+            const antiIL12_23 = `
+                <div class="bg-yellow-50 p-3 rounded border border-yellow-100 mb-3">
+                    <h5 class="font-bold text-yellow-700 text-sm mb-2">Anti-IL12/23 (ustekinumab)</h5>
+                    ${createCheckbox('edu_il12_1', 'Riesgo aumentado de infecciones respiratorias')}
+                    ${createCheckbox('edu_il12_2', 'Tuberculosis: screening previo')}
+                    ${createCheckbox('edu_il12_3', 'Informar sobre vacunación actualizada previa')}
+                </div>`;
+            
+            const antiCD20 = `
+                <div class="bg-purple-50 p-3 rounded border border-purple-100 mb-3">
+                    <h5 class="font-bold text-purple-700 text-sm mb-2">Anti-CD20 (rituximab)</h5>
+                    ${createCheckbox('edu_rtx_1', 'Reacciones de infusión: fiebre, escalofríos, durante primera infusión')}
+                    ${createCheckbox('edu_rtx_2', 'Hepatitis B: screening obligatorio, profilaxis antiviral si positivo')}
+                    ${createCheckbox('edu_rtx_3', 'Progresiva multifocal (PML): raro pero grave, informar síntomas neurológicos')}
+                    ${createCheckbox('edu_rtx_4', 'Hipogammaglobulinemia: vigilancia de infecciones recurrentes')}
+                    ${createCheckbox('edu_rtx_5', 'Vacunación: realizar antes de iniciar, evitar vivas durante tratamiento')}
+                </div>`;
+            
+            const jakInhibitors = `
+                <div class="bg-blue-50 p-3 rounded border border-blue-100 mb-3">
+                    <h5 class="font-bold text-blue-700 text-sm mb-2">Inhibidores JAK (tofacitinib, baricitinib, upadacitinib)</h5>
+                    ${createCheckbox('edu_jak_1', 'Riesgo tromboembólico: venoso y arterial')}
+                    ${createCheckbox('edu_jak_2', 'Virus Zoster: riesgo aumentado, vacunación previa recomendada')}
+                    ${createCheckbox('edu_jak_3', 'Control periódico de hemograma, colesterol y transaminasas')}
+                    ${createCheckbox('edu_jak_4', 'Interacciones medicamentosas: CYP3A4 (ej. ketoconazol, rifampicina)')}
+                    ${createCheckbox('edu_jak_5', 'Suspender ante infección activa')}
+                </div>`;
+            
+            const abatacept = `
+                <div class="bg-green-50 p-3 rounded border border-green-100 mb-3">
+                    <h5 class="font-bold text-green-700 text-sm mb-2">Abatacept</h5>
+                    ${createCheckbox('edu_aba_1', 'Reacciones en sitio de inyección')}
+                    ${createCheckbox('edu_aba_2', 'Riesgo aumentado de infecciones respiratorias')}
+                    ${createCheckbox('edu_aba_3', 'Vacunación: realizar antes de iniciar')}
+                    ${createCheckbox('edu_aba_4', 'No administrar simultáneamente con anti-TNF')}
+                </div>`;
+            
+            const metotrexato = `
+                <div class="bg-teal-50 p-3 rounded border border-teal-100 mb-3">
+                    <h5 class="font-bold text-teal-700 text-sm mb-2">Metotrexato</h5>
+                    ${createCheckbox('edu_mtx_1', 'Ácido fólico: tomar semanalmente (no el mismo día que MTX)')}
+                    ${createCheckbox('edu_mtx_2', 'Hepatotoxicidad: evitar alcohol, controles hepáticos periódicos')}
+                    ${createCheckbox('edu_mtx_3', 'Mielosupresión: controles de hemograma')}
+                    ${createCheckbox('edu_mtx_4', 'Teratogénico: anticoncepción efectiva obligatoria')}
+                    ${createCheckbox('edu_mtx_5', 'Fotosensibilidad: protección solar')}
+                </div>`;
+            
+            return antiTNF + antiIL17 + antiIL12_23 + antiCD20 + jakInhibitors + abatacept + metotrexato;
+        }
+
+        function getPostInicioTemplate() {
+            let calcs = '';
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('basfi', 'Calcular BASFI');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('rapid3', 'Calcular RAPID3');
+            else if (currentPatient.pathology === 'AR') calcs = createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('morisky', 'Morisky-Green');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('morisky', 'Morisky-Green') + createCalcButton('mars', 'MARS-5');
+            return `
+                ${createSection('Verificación de Datos y Contexto', 'check-square', `
+                    ${createCheckbox('ver1', 'Confirmar identidad y fecha inicio biológico')}
+                    ${createCheckbox('ver2', 'Verificar fecha exacta de inicio tratamiento')}
+                    ${createCheckbox('ver3', 'Confirmar medicamento y dosis')}
+
+                `)}
+                ${createSection('Evaluación Respuesta', 'bar-chart-2', `
+                    <div class="pt-2 pb-2">
+                        <label class="text-sm font-medium text-clinical-700 block mb-2">Valoración Global Subjetiva (EVA 0-10)</label>
+                        ${createIntegerSelector('pga', 'Valoración global subjetiva (0=Sin actividad, 10=Máxima actividad)', 0, 10)}
+                    </div>
+                    <div class="pt-2 pb-2">
+                        <label class="text-sm font-medium text-clinical-700 block mb-2">Dolor Actual (EVA 0-10)</label>
+                        ${createIntegerSelector('eva', null, 0, 10, 'updateEVA')}
+                    </div>
+                    ${createCheckbox('resp3', 'Evaluar cambios en rigidez matutina')}
+                    ${createCheckbox('resp4', 'Preguntar por mejoría en articulaciones inflamadas')}
+                    ${createCheckbox('resp5', 'Valorar mejora funcional')}
+                    <div><span class="text-sm font-medium text-clinical-700 block mb-2">Índices de Actividad:</span>${calcs}</div>
+                `)}
+                ${createSection('Seguridad y Efectos Secundarios', 'shield', `
+                    ${createCheckbox('efec1', 'Preguntar por INFECCIONES desde el inicio')}
+                    ${createCheckbox('efec2', 'Reacciones locales en sitio inyección')}
+                    ${createCheckbox('efec3', 'Síntomas sistémicos nuevos')}
+                    ${createCheckbox('efec4', 'Confirmar analítica de control')}
+                    ${createCheckbox('efec5', `Signos de alarma específicos: ${getAlarmSigns()}`)}
+                `)}
+                ${createSection('Adherencia y Técnica', 'thumbs-up', `
+                    ${createCheckbox('adh1', 'Confirmar administración según prescripción')}
+                    ${createCheckbox('adh2', 'Verificar técnica (dificultades)')}
+                    ${createCheckbox('adh3', 'Olvidos o problemas de suministro')}
+                    ${createCheckbox('adh4', 'Revisar conservación del medicamento')}
+                `)}
+                ${createSection('Prevención y Cierre', 'calendar', `
+                    ${createCheckbox('prev2', 'Higiene de manos frecuente')}
+                    ${createCheckbox('prev3', 'Recordar Próxima Cita')}
+                    ${createCheckbox('dig1', 'Verificar registro de síntomas en papel/diario (si aplica)')}
+                    ${createCheckbox('cont1', 'Proporcionar teléfono de dudas')}
+                `)}
+            `;
+        }
+
+        function getSeguimientoTemplate() {
+            let calcs = '';
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI');
+            else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('haq', 'Calcular HAQ-DI');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K');
+
+            return `
+                ${createSection('Recordatorio y Analítica', 'history', `
+                    ${createCheckbox('seg1', 'Informar esquema anual reumatólogo / semestral enfermería')}
+                    ${createCheckbox('ana1', 'Revisar hemograma completo')}
+                    ${createCheckbox('ana2', 'Comprobar función hepática y renal')}
+                    ${createCheckbox('ana3', 'Verificar reactantes fase aguda (VSG, PCR)')}
+                `)}
+                ${createSection('Metrología y PROs', 'activity', `
+                    <div class="pt-2 pb-2">
+                        <label class="text-sm font-medium text-clinical-700 block mb-2">Valoración Dolor (EVA 0-10)</label>
+                        ${createIntegerSelector('eva', null, 0, 10, 'updateEVA')}
+                    </div>
+                    <div><span class="text-sm font-medium text-clinical-700 block mb-2">Índice Actividad:</span>${calcs}</div>
+                `)}
+                ${createSection('Adherencia Terapéutica', 'pie-chart', `
+                    ${createCalcButton('morisky', 'Test Morisky (MMAS-4)')}
+                    ${createCalcButton('mars', 'Test MARS-5')}
+                `)}
+                ${createSection('Comorbilidades y Hechos', 'file-plus', `
+                    ${createCheckbox('com1', 'Preguntar por nuevas enfermedades')}
+                    ${createCheckbox('com2', 'Revisar efectos secundarios actuales')}
+                    ${createCheckbox('com3', 'Control riesgo cardiovascular')}
+                    ${createCheckbox('hec1', 'Hospitalizaciones o urgencias')}
+                    ${createCheckbox('hec3', 'Infecciones o vacunas recibidas')}
+                `)}
+            `;
+        }
+
+        function getBroteTemplate() {
+            let calcs = '';
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID');
+            else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3');
+
+            return `
+                ${createSection('Evaluación Inicial del Brote', 'search', `
+                    ${createCheckbox('bro1', 'Preguntar qué ha ocurrido (causa del brote)')}
+                    ${createCheckbox('bro2', 'Tiempo de evolución síntomas')}
+                    ${createCheckbox('bro3', 'Factores desencadenantes (estrés, infección)')}
+                    ${createCheckbox('bro4', 'Medicación tomada para aliviar')}
+                `)}
+                ${createSection('Repetir PROs', 'bar-chart', `
+                    <div class="pt-2 pb-2">
+                        <label class="text-sm font-medium text-clinical-700 block mb-2">Dolor Brote (EVA 0-10)</label>
+                        ${createIntegerSelector('eva', null, 0, 10, 'updateEVA')}
+                    </div>
+                    ${createCheckbox('pro2', 'Evaluar rigidez matutina (minutos)')}
+                    ${createCheckbox('pro3', 'Limitación funcional actual vs basal')}
+                    <div><span class="text-sm font-medium text-clinical-700 block mb-2">Índice Actividad:</span>${calcs}</div>
+                `)}
+                ${createSection('Evaluación Gravedad', 'alert-octagon', `
+                    ${createCheckbox('gra1', 'Síntomas sistémicos (fiebre, peso)')}
+                    ${createCheckbox('gra2', 'Número articulaciones afectadas')}
+                    ${createCheckbox('gra3', 'Afectación actividades vida diaria')}
+                    ${createCheckbox('gra4', `Signos de alarma: ${getAlarmSigns()}`)}
+                `)}
+                ${createSection('Medidas y Seguimiento', 'user-check', `
+                    ${createCheckbox('med1', 'Ajustar analgesia según protocolo')}
+                    ${createCheckbox('med2', 'Reposo relativo / frío-calor')}
+                    ${createCheckbox('med4', 'Informar a reumatólogo (Cita <72h si grave)')}
+                    ${createCheckbox('seg1', 'Programar llamada seguimiento 48-72h')}
+                    ${createCheckbox('seg3', 'Explicar signos urgencia hospitalaria')}
+                `)}
+            `;
+        }
+
+        function getVacunacionTemplate() {
+            return `
+                ${createSection('Vacunas Inactivadas (RECOMENDADAS)', 'shield-check', `
+                    ${createCheckbox('vac_gripe', 'Vacuna Gripe (anual) - Trivalente o cuadrivalente inactivada')}
+                    ${createCheckbox('vac_covid', 'Vacuna COVID-19 - Dosis según calendario vigente')}
+                    ${createCheckbox('vac_neumoco_pcv13', 'Neumococo PCV13 (1 dosis si no prevacunado)')}
+                    ${createCheckbox('vac_neumoco_ppsv23', 'Neumococo PPSV23 (1 dosis, 8 semanas después PCV13)')}
+                    ${createCheckbox('vac_hep_b', 'Hepatitis B (serie completa o refuerzo)')}
+                    ${createCheckbox('vac_shingrix', 'Herpes Zoster - Shingrix (2 dosis, 2-6 meses) >50 años')}
+                    ${createCheckbox('vac_tetanos', 'Tétanos-Difteria-Tosferina (Td/Tdap cada 10 años)')}
+                `)}
+                ${createSection('Vacunas Vivas Atemuadas (CONTRAINDICADAS con biológicos)', 'alert-triangle', `
+                    <div class="bg-red-50 p-3 rounded border border-red-200 mb-3">
+                        <p class="text-sm text-red-800 font-bold">⚠️ NO administrar durante tratamiento biológico:</p>
+                    </div>
+                    ${createCheckbox('vac_contraind_mmr', 'Triple Vírica (Sarampión-Rubeola-Paperas) - CONTRAINDICADA')}
+                    ${createCheckbox('vac_contraind_varicela', 'Varicela - CONTRAINDICADA')}
+                    ${createCheckbox('vac_contraind_fiebre_amarilla', 'Fiebre Amarilla - CONTRAINDICADA')}
+                    ${createCheckbox('vac_contraind_intranasal', 'Gripe intranasal (FluMist) - CONTRAINDICADA')}
+                    ${createCheckbox('vac_contraind_bcgn', 'BCG (tuberculosis) - CONTRAINDICADA')}
+                `)}
+                ${createSection('Evaluación Pre-Vacunal', 'clipboard-check', `
+                    ${createCheckbox('prevac_1', 'Verificar ficha vacunal completa')}
+                    ${createCheckbox('prevac_2', 'Confirmar NO hay infección activa (fiebre >38°C)')}
+                    ${createCheckbox('prevac_3', 'Evaluar tratamiento inmunosupresor actual')}
+                    ${createCheckbox('prevac_4', 'Tiempo desde última dosis biológico (>2 semanas recomendado)')}
+                    ${createCheckbox('prevac_5', 'Embarazo o planificación familiar')}
+                `)}
+                ${createSection('Educación al Paciente', 'book-open', `
+                    ${createCheckbox('edu_vac_1', 'Explicar importancia vacunación en inmunosupresión')}
+                    ${createCheckbox('edu_vac_2', 'Informar efectos adversos frecuentes (dolor local, fiebre leve)')}
+                    ${createCheckbox('edu_vac_3', 'Recomendar vacunar a convivientes (gripe, COVID)')}
+                    ${createCheckbox('edu_vac_4', 'Señales de alerta post-vacunal (fiebre >39°C, reacción alérgica)')}
+                `)}
+                ${createSection('Registro y Seguimiento', 'calendar', `
+                    ${createCheckbox('reg_vac_1', 'Registrar vacunas en Diraya/Historia Clínica')}
+                    ${createCheckbox('reg_vac_2', 'Programar próximas dosis (si esquema incompleto)')}
+                    ${createCheckbox('reg_vac_3', 'Citar control post-vacunal si es necesario')}
+                    ${createCheckbox('reg_vac_4', 'Informar a reumatólogo sobre vacunación realizada')}
+                `)}
+            `;
+        }
+
+        // --- CALCULATOR LOGIC (INPUT IMPROVEMENTS) ---
+        let currentCalcType = null;
+        function openCalculator(type) {
+            currentCalcType = type;
+            document.getElementById('calculator-panel').classList.remove('translate-x-full');
+            document.getElementById('slide-over-backdrop').classList.remove('hidden');
+            document.getElementById('calc-title').textContent = type.toUpperCase();
+            document.getElementById('calc-body').innerHTML = getCalculatorForm(type);
+            document.getElementById('calc-result-display').classList.add('hidden');
+        }
+        function closeCalculator() {
+            document.getElementById('calculator-panel').classList.add('translate-x-full');
+            document.getElementById('slide-over-backdrop').classList.add('hidden');
+            currentCalcType = null;
+            loadChecklistContent();
+        }
+
+        const specialContent = {
+            inf: `
+                <div class="space-y-4">
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h3 class="font-bold text-red-900 mb-2">Criterios de derivación urgente</h3>
+                        <ul class="list-disc ml-4 text-red-800 space-y-1">
+                            <li>Fiebre >38.5 C sin foco claro en paciente con biológico</li>
+                            <li>Sospecha de tuberculosis (tos >3 semanas, sudoración nocturna, pérdida de peso)</li>
+                            <li>Signos de sepsis (taquicardia, hipotensión, alteración de conciencia)</li>
+                            <li>Herpes zóster diseminado o afectación ocular/ótica</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h3 class="font-bold text-amber-900 mb-3">Algoritmo: fiebre + biológico</h3>
+                        <div class="space-y-2 text-amber-900">
+                            <div class="flex items-start gap-2"><span class="font-bold bg-amber-200 px-2 rounded">1</span><span>Suspender biológico ante fiebre >38 C sin causa clara</span></div>
+                            <div class="flex items-start gap-2"><span class="font-bold bg-amber-200 px-2 rounded">2</span><span>Valorar foco: exploración, hemograma, PCR y cultivos si precisa</span></div>
+                            <div class="flex items-start gap-2"><span class="font-bold bg-amber-200 px-2 rounded">3</span><span>Notificar a reumatología; si hay gravedad, derivar a urgencias</span></div>
+                            <div class="flex items-start gap-2"><span class="font-bold bg-amber-200 px-2 rounded">4</span><span>No reiniciar hasta resolución y autorización médica</span></div>
+                        </div>
+                    </div>
+                </div>`,
+            emb: `
+                <div class="space-y-4">
+                    <div class="p-4 bg-pink-50 border border-pink-200 rounded-lg">
+                        <h3 class="font-bold text-pink-900 mb-2">Planificación preconcepcional</h3>
+                        <ul class="list-disc ml-4 text-pink-800 space-y-1">
+                            <li>Detectar deseo gestacional y avisar a reumatología con antelación</li>
+                            <li>Revisar vacunación preconcepcional (rubéola, varicela)</li>
+                            <li>Mantener anticoncepción eficaz hasta ajuste terapéutico seguro</li>
+                            <li>No suspender tratamiento sin orden médica</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h3 class="font-bold text-amber-900 mb-2">Rol enfermero</h3>
+                        <p class="text-sm text-amber-800">Detectar la situación, coordinar cita con reumatología/obstetricia y reforzar adherencia al plan acordado.</p>
+                    </div>
+                </div>`,
+            cir: `
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h3 class="font-bold text-blue-900 mb-3">Suspensión perioperatoria orientativa</h3>
+                        <p class="text-xs text-blue-700 mb-3 italic">Confirmar siempre con reumatólogo y anestesia</p>
+                        <table class="w-full text-xs border-collapse">
+                            <thead><tr class="bg-blue-100"><th class="p-2 border border-blue-200 text-left">Fármaco</th><th class="p-2 border border-blue-200">Suspender antes</th><th class="p-2 border border-blue-200">Reinicio</th></tr></thead>
+                            <tbody>
+                                <tr><td class="p-2 border border-blue-200 font-medium">Adalimumab</td><td class="p-2 border border-blue-200 text-center">4 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
+                                <tr class="bg-blue-50"><td class="p-2 border border-blue-200 font-medium">Etanercept</td><td class="p-2 border border-blue-200 text-center">2 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
+                                <tr><td class="p-2 border border-blue-200 font-medium">Infliximab</td><td class="p-2 border border-blue-200 text-center">4-8 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
+                                <tr class="bg-blue-50"><td class="p-2 border border-blue-200 font-medium">JAKi</td><td class="p-2 border border-blue-200 text-center">3-5 días</td><td class="p-2 border border-blue-200 text-center">1-2 sem</td></tr>
+                                <tr><td class="p-2 border border-blue-200 font-medium">MTX/HCQ/SSZ</td><td class="p-2 border border-blue-200 text-center">Según tipo de cirugía</td><td class="p-2 border border-blue-200 text-center">Individualizar</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`,
+            car: `
+                <div class="space-y-4">
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h3 class="font-bold text-red-900 mb-2">Riesgo cardiovascular aumentado</h3>
+                        <p class="text-clinical-700">AR, APs y EA elevan el riesgo CV por inflamación crónica. Ajustar seguimiento de factores de riesgo.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-white border border-clinical-200 rounded-lg">
+                            <h3 class="font-bold text-clinical-900 mb-3">Checklist consulta</h3>
+                            <ul class="list-disc ml-4 text-clinical-700 space-y-1 text-xs">
+                                <li>PA y frecuencia cardíaca en cada visita</li>
+                                <li>Tabaquismo y consejo antitabaco</li>
+                                <li>Perfil lipídico y glucemia periódicos</li>
+                                <li>Peso, IMC y perímetro abdominal</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-white border border-clinical-200 rounded-lg">
+                            <h3 class="font-bold text-clinical-900 mb-3">Fármacos y riesgo CV</h3>
+                            <ul class="list-disc ml-4 text-clinical-700 space-y-1 text-xs">
+                                <li>AINEs pueden elevar PA; monitorizar</li>
+                                <li>JAKi pueden modificar perfil lipídico</li>
+                                <li>Corticoides crónicos empeoran factores metabólicos</li>
+                                <li>Coordinar con AP/cardiología en riesgo alto</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>`
+        };
+
+        // --- SPECIAL SITUATIONS FUNCTIONS ---
+        function openSpecialSituations() {
+            document.getElementById('special-situations-panel').classList.remove('translate-x-full');
+            document.getElementById('special-situations-backdrop').classList.remove('hidden');
+            showSpecialTab('inf');
+        }
+        function closeSpecialSituations() {
+            document.getElementById('special-situations-panel').classList.add('translate-x-full');
+            document.getElementById('special-situations-backdrop').classList.add('hidden');
+        }
+        function showSpecialTab(tab) {
+            document.getElementById('special-content').innerHTML = specialContent[tab] || '';
+            document.querySelectorAll('.special-tab').forEach(t => t.classList.remove('active-stab'));
+            const active = document.getElementById(`stab-${tab}`);
+            if (active) active.classList.add('active-stab');
+            lucide.createIcons();
+        }
+
+        function toggleSledaiLab() {
+            const hasLab = document.getElementById('sledai_lab_toggle').checked;
+            const labSection = document.getElementById('sledai_lab_section');
+            if(hasLab) labSection.classList.remove('hidden');
+            else labSection.classList.add('hidden');
+        }
+
+        function toggleDasMethod() {
+            const method = document.querySelector('input[name="das_method"]:checked').value;
+            const vsgSection = document.getElementById('das_vsg_section');
+            const pcrSection = document.getElementById('das_pcr_section');
+            if(method === 'vsg') {
+                vsgSection.classList.remove('hidden');
+                pcrSection.classList.add('hidden');
+            } else {
+                vsgSection.classList.add('hidden');
+                pcrSection.classList.remove('hidden');
+            }
+        }
+
+        function toggleAsdasMethod() {
+            const method = document.querySelector('input[name="asdas_method"]:checked').value;
+            const crpSection = document.getElementById('asdas_crp_section');
+            const esrSection = document.getElementById('asdas_esr_section');
+            if(method === 'crp') {
+                crpSection.classList.remove('hidden');
+                esrSection.classList.add('hidden');
+            } else {
+                crpSection.classList.add('hidden');
+                esrSection.classList.remove('hidden');
+            }
+        }
+
+        function getCalculatorForm(type) {
+            if (type === 'dapsa') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>DAPSA</strong> — Artritis Psoriásica<br>
+                        Umbrales: ≤4 Remisión · ≤14 Baja · ≤28 Moderada · &gt;28 Alta
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">1. Articulaciones dolorosas (0–68)</label>
+                        <input type="number" id="dapsa_das" min="0" max="68" step="1" placeholder="0" class="w-full p-3 border border-clinical-300 rounded-lg bg-white text-clinical-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">2. Articulaciones inflamadas (0–66)</label>
+                        <input type="number" id="dapsa_dis" min="0" max="66" step="1" placeholder="0" class="w-full p-3 border border-clinical-300 rounded-lg bg-white text-clinical-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">3. PCR (mg/dL)</label>
+                        <input type="number" id="dapsa_pcr" step="0.1" min="0" placeholder="Ej: 1.2" class="w-full p-3 border border-clinical-300 rounded-lg bg-white text-clinical-800">
+                    </div>
+                    ${createIntegerSelector('dapsa_pain', '4. Dolor del paciente (0–10)', 0, 10)}
+                    ${createIntegerSelector('dapsa_pga', '5. Valoración global del paciente (0–10)', 0, 10)}
+                    <p class="text-xs text-clinical-400 italic">Fórmula: AD + AI + PCR(mg/dL) + Dolor + PGA</p>
+                </div>`;
+            }
+            if (type === 'basfi') {
+                const basfiItems = [
+                    '1. Ponerse los calcetines o medias sin ayuda ni adaptación (ej: calzador de mango largo)',
+                    '2. Inclinarse desde la cintura para recoger un bolígrafo del suelo sin ayuda',
+                    '3. Alcanzar un estante alto sin ayuda ni adaptación',
+                    '4. Levantarse de una silla sin brazos sin usar las manos ni ninguna otra ayuda',
+                    '5. Levantarse del suelo desde la posición tumbado boca arriba sin ayuda',
+                    '6. Mantenerse de pie sin apoyo durante 10 minutos sin molestias',
+                    '7. Subir 12-15 escalones sin pasamanos ni bastón (un pie en cada escalón)',
+                    '8. Mirar por encima del hombro sin girar el cuerpo',
+                    '9. Realizar actividades físicamente exigentes (ej: fisioterapia, jardín, deporte)',
+                    '10. Realizar las actividades de todo el día en casa o en el trabajo'
+                ];
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>BASFI</strong> — Bath Ankylosing Spondylitis Functional Index<br>
+                        Evalúa capacidad funcional en EA. 0=Fácil · 10=Imposible. Umbral &gt;4: funcionalidad afectada.
+                    </div>
+                    <p class="text-xs text-clinical-500 italic">Indique el nivel de dificultad en la última semana (0=Sin dificultad, 10=Imposible).</p>
+                    ${basfiItems.map((q,i) => createIntegerSelector(`basfi_${i+1}`, q, 0, 10)).join('')}
+                    <p class="text-xs text-clinical-400 italic">Resultado = Media de los 10 ítems</p>
+                </div>`;
+            }
+            if (type === 'basdai') {
+                return `<div class="space-y-8">
+                    <p class="text-sm text-clinical-500 italic">Por favor, marque el recuadro que representa su respuesta (0=Ausente, 10=Muy intenso). Todas las preguntas se refieren a la última semana.</p>
+                    ${createIntegerSelector('bas_1', '1. ¿Cómo describiría el grado global de fatiga / cansancio que ha experimentado?', 0, 10)}
+                    ${createIntegerSelector('bas_2', '2. ¿Cómo describiría el grado global de dolor en cuello, espalda o caderas debido a su enfermedad?', 0, 10)}
+                    ${createIntegerSelector('bas_3', '3. ¿Cómo describiría el grado global de dolor-hinchazón en otras articulaciones fuera de cuello, espalda o caderas?', 0, 10)}
+                    ${createIntegerSelector('bas_4', '4. ¿Cómo describiría el grado global de malestar que ha tenido en zonas dolorosas al tacto o a la presión?', 0, 10)}
+                    ${createIntegerSelector('bas_5', '5. ¿Cómo describiría el grado global de rigidez matutina que ha tenido al despertar?', 0, 10)}
+                    <div>
+                        <label class="block text-sm mb-2 font-medium text-clinical-800">6. ¿Cuánto tiempo dura su rigidez matutina tras despertarse?</label>
+                        <select id="bas_6" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                            <option value="0">0 horas</option><option value="2.5">1/2 hora</option><option value="5">1 hora</option>
+                            <option value="7.5">1 hora y media</option><option value="10">2 horas o más</option>
+                        </select>
+                    </div>
+                </div>`;
+            }
+            if (type === 'psaid') {
+                return `<div class="space-y-8">
+                    <p class="text-sm text-clinical-500 italic">Por favor díganos cómo se ha sentido usted durante la última semana (0=Nada, 10=Máximo).</p>
+                    ${createIntegerSelector('ps_1', '1. Dolor: Rodee con un círculo el número que mejor describa el dolor que ha sentido debido a su artritis psoriásica.', 0, 10)}
+                    ${createIntegerSelector('ps_2', '2. Fatiga/Cansancio: Rodee con un círculo el número que mejor describa la sensación de fatiga o cansancio que ha sentido.', 0, 10)}
+                    ${createIntegerSelector('ps_3', '3. Problemas de la piel: Rodee con un círculo el número que mejor describa los problemas de la piel, incluyendo picor.', 0, 10)}
+                    ${createIntegerSelector('ps_4', '4. Trabajo y/o actividades de ocio: Dificultades que ha tenido para desarrollar su trabajo y/o actividades de ocio.', 0, 10)}
+                    ${createIntegerSelector('ps_5', '5. Capacidad funcional: Dificultad que ha tenido para hacer las actividades físicas cotidianas.', 0, 10)}
+                    ${createIntegerSelector('ps_6', '6. Incomodidad/Irritación: Sensación de incomodidad y/o irritación que ha sentido.', 0, 10)}
+                    ${createIntegerSelector('ps_7', '7. Dificultad para dormir: Dificultad para dormir (descansar por la noche).', 0, 10)}
+                    ${createIntegerSelector('ps_8', '8. Afrontamiento: ¿Qué tal ha conseguido afrontar, sobrellevar o hacerse cargo de su enfermedad? (0=Muy bien, 10=Muy mal)', 0, 10)}
+                    ${createIntegerSelector('ps_9', '9. Ansiedad, miedo e incertidumbre: Nivel de ansiedad, miedo e incertidumbre (futuro, tratamiento...).', 0, 10)}
+                    ${createIntegerSelector('ps_10', '10. Apuro y/o vergüenza: Nivel de apuro y/o vergüenza por su apariencia.', 0, 10)}
+                    ${createIntegerSelector('ps_11', '11. Participación social: Dificultades para participar de forma satisfactoria en actividades sociales.', 0, 10)}
+                    ${createIntegerSelector('ps_12', '12. Depresión: Nivel de depresión (tristeza o estar depresivo).', 0, 10)}
+                </div>`;
+            }
+            if (type === 'rapid3') {
+                return `<div class="space-y-6">
+                    <h4 class="font-bold border-b pb-2">1. Capacidad Funcional</h4>
+                    <p class="text-xs text-clinical-500 mb-2">Durante la última semana, ¿ha sido capaz de...</p>
+                    ${['a. Vestirse, incluyendo abrocharse los botones y atarse los cordones de los zapatos?','b. Acostarse y levantarse de la cama?','c. Llevar una taza o vaso lleno a la boca?','d. Caminar fuera de casa por un terreno llano?','e. Lavarse y secarse todo el cuerpo?','f. Agacharse para recoger ropa del suelo?','g. Abrir y cerrar grifos?','h. Entrar y salir de un coche, autobús o tren?','i. Caminar 3 km (o 2 millas) si lo desea?','j. Participar en actividades recreativas y deportes si lo desea?'].map((l,i)=>`
+                        <div class="mb-4 bg-white p-3 rounded border border-clinical-100">
+                            <p class="text-sm mb-2 font-medium text-clinical-800">${l}</p>
+                            <div class="flex flex-col gap-2">
+                                ${['Sin ninguna dificultad (0)', 'Con alguna dificultad (1)', 'Con mucha dificultad (2)', 'Incapaz de hacerlo (3)'].map((txt, v) => 
+                                    `<label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-clinical-50 rounded"><input type="radio" name="rap_f${i+1}" value="${v}" class="text-accent-600 focus:ring-accent-500"><span class="text-sm">${txt}</span></label>`
+                                ).join('')}
+                            </div>
+                        </div>`).join('')}
+                    
+                    <h4 class="font-bold text-clinical-900 border-b pb-2 mt-6">2. Evaluación del Dolor</h4>
+                    ${createIntegerSelector('rap_pain', '¿Cuánto dolor ha tenido debido a su enfermedad durante la última semana? (0=Sin dolor, 10=El peor imaginable)', 0, 10)}
+                    
+                    <h4 class="font-bold text-clinical-900 border-b pb-2 mt-6">3. Evaluación Global</h4>
+                    ${createIntegerSelector('rap_pga', 'Considerando todas las formas en que la enfermedad le afecta, ¿cómo se encuentra? (0=Muy bien, 10=Muy mal)', 0, 10)}
+                </div>`;
+            }
+            if (type === 'haq') {
+                 return `<div class="space-y-6">
+                    <p class="text-sm text-clinical-500 italic">Durante la última semana, ¿ha sido capaz de...</p>
+                    
+                    ${[
+                        {t:'1. Vestirse y asearse', q:['Vestirse solo, incluyendo abrocharse los botones y atarse los cordones','Enjabonarse la cabeza'], aid:'haq_aid_1'},
+                        {t:'2. Levantarse', q:['Levantarse de una silla sin brazos','Acostarse y levantarse de la cama'], aid:'haq_aid_2'},
+                        {t:'3. Comer', q:['Cortar un filete de carne','Abrir un cartón de leche nuevo','Servirse la bebida'], aid:'haq_aid_3'},
+                        {t:'4. Caminar', q:['Caminar fuera de casa por un terreno llano','Subir cinco escalones'], aid:'haq_aid_4'},
+                        {t:'5. Higiene', q:['Lavarse y secarse todo el cuerpo','Sentarse y levantarse del retrete','Ducharse'], aid:'haq_aid_5'},
+                        {t:'6. Alcanzar', q:['Coger objeto de 1Kg encima de la cabeza','Agacharse y recoger ropa del suelo'], aid:'haq_aid_6'},
+                        {t:'7. Prensión', q:['Abrir la puerta de un coche','Abrir tarros previamente abiertos','Abrir y cerrar grifos'], aid:'haq_aid_7'},
+                        {t:'8. Otras Actividades', q:['Hacer los recados y las compras','Entrar y salir de un coche','Hacer tareas de casa (barrer, platos)'], aid:'haq_aid_8'}
+                    ].map((cat, idx) => `
+                        <div class="bg-clinical-50 p-4 rounded-lg border border-clinical-200">
+                            <h5 class="font-bold text-sm mb-3 text-clinical-900 uppercase tracking-wide border-b pb-1 border-clinical-200">${cat.t}</h5>
+                            ${cat.q.map((qtext, qidx) => {
+                                return `<div class="mb-4">
+                                    <p class="text-sm mb-2 font-medium text-clinical-800">${qtext}</p>
+                                    <div class="flex flex-col gap-1 bg-white p-2 rounded border border-clinical-100">
+                                        ${['Sin dificultad (0)', 'Con alguna dificultad (1)', 'Con mucha dificultad (2)', 'Incapaz de hacerlo (3)'].map((txt, v) => 
+                                            `<label class="flex items-center gap-2 cursor-pointer hover:bg-clinical-50 p-1 rounded"><input type="radio" name="haq_cat_${idx}_q_${qidx}" value="${v}" class="text-accent-600"><span class="text-sm">${txt}</span></label>`
+                                        ).join('')}
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                            <label class="flex items-center gap-2 text-sm mt-2 font-bold text-clinical-700 bg-white p-2 rounded border"><input type="checkbox" id="${cat.aid}" class="custom-checkbox w-4 h-4"> Necesita ayuda de otra persona o utensilios</label>
+                        </div>
+                    `).join('')}
+                 </div>`;
+            }
+            if (type === 'asashi') {
+                return `<div class="space-y-4 text-sm">
+                    <h4 class="font-bold text-clinical-800 border-b pb-2">ASAS Health Index</h4>
+                    <p class="text-xs text-clinical-500 mb-2">Por favor, seleccione la respuesta para cada afirmación:</p>
+                    ${[
+                        '1. El dolor, a veces, trastorna mis actividades normales.',
+                        '2. Me resulta difícil estar de pie mucho tiempo.',
+                        '3. Tengo problemas para correr.',
+                        '4. Tengo problemas para usar el váter.',
+                        '5. A menudo estoy agotado.',
+                        '6. Estoy menos motivado para realizar actividades que requieran esfuerzo físico.',
+                        '7. He perdido el interés por el sexo.',
+                        '8. Tengo dificultad para manejar los pedales en mi coche.',
+                        '9. Me resulta difícil establecer comunicación con la gente.',
+                        '10. Soy incapaz de caminar fuera de casa por un terreno llano.',
+                        '11. Me resulta difícil concentrarme.',
+                        '12. Estoy limitado para viajar debido a mi movilidad.',
+                        '13. A menudo me siento frustrado.',
+                        '14. Me resulta difícil lavarme el pelo.',
+                        '15. He tenido cambios económicos debido a mi enfermedad reumática.',
+                        '16. Duermo mal por la noche.',
+                        '17. No puedo superar mis dificultades.'
+                    ].map((q,i)=>`
+                        <div class="p-3 bg-white rounded border border-clinical-100 hover:border-accent-300 transition-colors">
+                            <p class="mb-2 font-medium text-clinical-800">${q}</p>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="asas_${i+1}" value="1" class="text-accent-600 focus:ring-accent-500"> Estoy de acuerdo</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="asas_${i+1}" value="0" class="text-accent-600 focus:ring-accent-500"> No estoy de acuerdo</label>
+                            </div>
+                        </div>`).join('')}
+                </div>`;
+            }
+            if (type === 'sledai') {
+                return `<div class="space-y-4 text-sm">
+                    <h4 class="font-bold text-clinical-800">SLEDAI-2K</h4>
+                    <div class="flex items-center justify-between p-3 bg-white border rounded mb-2">
+                        <span class="font-bold text-clinical-700">¿Analítica disponible?</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="sledai_lab_toggle" class="sr-only peer" onchange="toggleSledaiLab()">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-500"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="bg-red-50 p-3 rounded border border-red-100">
+                        <h5 class="font-bold text-red-800 text-xs mb-2">GRAVE (8 pts)</h5>
+                        ${['Convulsiones','Psicosis','Sdme orgánico-cerebral','Alteraciones visuales','Alt. Pares craneales','Cefalea lúpica','AVC','Vasculitis'].map((l,i)=>`<label class="flex items-center gap-2 mb-1"><input type="checkbox" id="sle_8_${i}" class="custom-checkbox"> ${l}</label>`).join('')}
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded border border-orange-100">
+                        <h5 class="font-bold text-orange-800 text-xs mb-2">MODERADO (4 pts)</h5>
+                        ${['Miositis','Artritis','Cilindros urinarios','Hematuria','Proteinuria','Piuria'].map((l,i)=>`<label class="flex items-center gap-2 mb-1 ${i>1?'lab-item hidden':''}" ${i>1?'data-lab="true"':''}><input type="checkbox" id="sle_4_${i}" class="custom-checkbox"> ${l}</label>`).join('')}
+                    </div>
+                    <div id="sledai_lab_section" class="hidden">
+                        <div class="bg-yellow-50 p-3 rounded border border-yellow-100 mt-2">
+                            <h5 class="font-bold text-yellow-800 text-xs mb-2">LEVE / LAB (2 pts)</h5>
+                            ${['Complemento bajo','Anti DNA aumentado'].map((l,i)=>`<label class="flex items-center gap-2 mb-1"><input type="checkbox" id="sle_2_lab_${i}" class="custom-checkbox"> ${l}</label>`).join('')}
+                        </div>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded border border-yellow-100">
+                         <h5 class="font-bold text-yellow-800 text-xs mb-2">LEVE / CLINICO (2 pts)</h5>
+                         ${['Exantema nuevo','Alopecia','Ulceras bucales','Pleuritis','Pericarditis'].map((l,i)=>`<label class="flex items-center gap-2 mb-1"><input type="checkbox" id="sle_2_cli_${i}" class="custom-checkbox"> ${l}</label>`).join('')}
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded border border-blue-100">
+                        <h5 class="font-bold text-blue-800 text-xs mb-2">OTROS (1 pt)</h5>
+                        ${['Fiebre','Trombopenia (Lab)','Leucopenia (Lab)'].map((l,i)=>`<label class="flex items-center gap-2 mb-1"><input type="checkbox" id="sle_1_${i}" class="custom-checkbox"> ${l}</label>`).join('')}
+                    </div>
+                </div>`;
+            }
+            if(type === 'morisky') {
+                 return `<div class="space-y-4">
+                    <h4 class="font-bold border-b pb-2">Morisky-Green (4 ítems)</h4>
+                    ${['1. ¿Olvida alguna vez tomar los medicamentos para tratar su enfermedad?','2. ¿Toma los medicamentos a la hora indicada?','3. Cuando se encuentra bien, ¿deja de tomar la medicación?','4. Si alguna vez le sienta mal, ¿deja de tomarla?'].map((q,i)=>`
+                        <div class="flex justify-between items-center p-3 bg-white border rounded mb-2"><span class="text-sm w-2/3 font-medium">${q}</span><div class="flex gap-2">
+                        <label class="text-sm border px-3 py-1 rounded cursor-pointer hover:bg-clinical-50"><input type="radio" name="mor_${i}" value="${i===1?'1':'0'}" class="mr-1">Sí</label>
+                        <label class="text-sm border px-3 py-1 rounded cursor-pointer hover:bg-clinical-50"><input type="radio" name="mor_${i}" value="${i===1?'0':'1'}" class="mr-1">No</label></div></div>`).join('')}
+                 </div>`;
+            }
+            if(type === 'mars') {
+                 return `<div class="space-y-4">
+                    <h4 class="font-bold border-b pb-2">MARS-5</h4>
+                    <p class="text-xs text-gray-500">1=Siempre ... 5=Nunca</p>
+                    ${['1. Me olvido de tomarlos','2. Modifico la dosis','3. Dejo de tomarlos durante un tiempo','4. Decido no tomar alguna dosis','5. Tomo menos cantidad de la prescrita'].map((q,i)=>`
+                        <div class="mb-4 bg-white p-3 border rounded">
+                            <p class="text-sm mb-2 font-medium">${q}</p>
+                            <div class="flex justify-between">
+                                ${['Siempre (1)','A menudo (2)','A veces (3)','Rara vez (4)','Nunca (5)'].map((l,v) => 
+                                    `<label class="flex flex-col items-center cursor-pointer"><input type="radio" name="mar_${i}" value="${v+1}" class="mb-1"><span class="text-xs text-gray-600">${l}</span></label>`
+                                ).join('')}
+                            </div>
+                        </div>`).join('')}
+                 </div>`;
+            }
+            if (type === 'das28') {
+                return `<div class="space-y-6">
+                    <p class="text-sm text-clinical-500 italic">DAS28: Score de actividad de la artritis reumatoide (28 articulaciones)</p>
+                    
+                    <div class="bg-blue-50 p-3 rounded border border-blue-200 mb-4">
+                        <label class="block text-sm font-bold text-clinical-800 mb-2">Seleccione método de cálculo:</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="das_method" value="vsg" checked onchange="toggleDasMethod()" class="text-accent-600">
+                                <span class="text-sm">Con VSG</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="das_method" value="pcr" onchange="toggleDasMethod()" class="text-accent-600">
+                                <span class="text-sm">Con PCR</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">Número de articulaciones DOLOROSAS (Ritchie 0-28)</label>
+                        <input type="number" id="das_dolor" min="0" max="28" value="0" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">Número de articulaciones INFLAMADAS (0-28)</label>
+                        <input type="number" id="das_inflam" min="0" max="28" value="0" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">EVA Global del Paciente (0-100 mm)</label>
+                        <input type="number" id="das_eva" min="0" max="100" value="0" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    
+                    <div id="das_vsg_section">
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">VSG (mm/1ª hora)</label>
+                        <input type="number" id="das_vsg" min="1" max="150" value="20" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    
+                    <div id="das_pcr_section" class="hidden">
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">PCR (mg/L)</label>
+                        <input type="number" id="das_pcr" min="0" max="200" value="10" step="0.1" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                </div>`;
+            }
+            if (type === 'asdas') {
+                return `<div class="space-y-6">
+                    <p class="text-sm text-clinical-500 italic">ASDAS: Score de actividad en espondiloartritis axial</p>
+                    
+                    <div class="bg-blue-50 p-3 rounded border border-blue-200 mb-4">
+                        <label class="block text-sm font-bold text-clinical-800 mb-2">Seleccione método de cálculo:</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="asdas_method" value="crp" checked onchange="toggleAsdasMethod()" class="text-accent-600">
+                                <span class="text-sm">ASDAS-CRP</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="asdas_method" value="esr" onchange="toggleAsdasMethod()" class="text-accent-600">
+                                <span class="text-sm">ASDAS-ESR (VSG)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    ${createIntegerSelector('asdas_back', 'Dolor lumbar (0-10)', 0, 10)}
+                    ${createIntegerSelector('asdas_peripheral', 'Dolor articular periférico (0-10)', 0, 10)}
+                    ${createIntegerSelector('asdas_entheseal', 'Dolor en puntos de inserción (0-10)', 0, 10)}
+                    ${createIntegerSelector('asdas_pga', 'EVA Global del Paciente (0-10)', 0, 10)}
+                    ${createIntegerSelector('asdas_stiffness', 'Duración rigidez matutina (0-10)', 0, 10)}
+                    
+                    <div id="asdas_crp_section">
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">PCR (mg/L)</label>
+                        <input type="number" id="asdas_crp_val" min="0" max="200" value="10" step="0.1" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    
+                    <div id="asdas_esr_section" class="hidden">
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">VSG (mm/1ª hora)</label>
+                        <input type="number" id="asdas_esr_val" min="1" max="150" value="20" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                </div>`;
+            }
+            return '';
+        }
+
+        function createIntegerSelector(id, label, min, max, changeFn = null) {
+            let html = `<div>`;
+            if(label) {
+                html += `<div class="flex justify-between mb-2"><label class="text-sm font-medium text-clinical-800 flex-1">${label}</label></div>`;
+            }
+            html += `<div class="grid grid-cols-11 gap-1" id="${id}_container">`;
+            for(let i=min; i<=max; i++) {
+                html += `<button type="button" class="num-btn" onclick="selectInteger('${id}', ${i}, ${changeFn ? '\'' + changeFn + '\'' : 'null'})" id="${id}_btn_${i}" aria-label="Seleccionar ${i}">${i}</button>`;
+            }
+            html += `</div><input type="hidden" id="${id}" value=""></div>`;
+            return html;
+        }
+
+        function selectInteger(id, value, changeFn) {
+            // Update hidden input
+            const input = document.getElementById(id);
+            if(input) input.value = value;
+            
+            // Visual feedback
+            const container = document.getElementById(`${id}_container`);
+            container.querySelectorAll('.num-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById(`${id}_btn_${value}`).classList.add('selected');
+
+            // Optional callback (for EVA live update)
+            if(changeFn && typeof window[changeFn] === 'function') {
+                window[changeFn](value);
+            }
+        }
+        
+        // Helper to update integer selector UI from stored value
+        function updateIntegerSelect(id, value) {
+            const btn = document.getElementById(`${id}_btn_${value}`);
+            if(btn) selectInteger(id, value, null);
+        }
+
+        function hasValue(id) {
+            const el = document.getElementById(id);
+            return !!el && el.value !== '';
+        }
+
+        function hasChecked(name) {
+            return !!document.querySelector(`input[name="${name}"]:checked`);
+        }
+
+        function ensureRequiredFields(type) {
+            const required = {
+                basdai: ['bas_1', 'bas_2', 'bas_3', 'bas_4', 'bas_5', 'bas_6'],
+                psaid: ['ps_1', 'ps_2', 'ps_3', 'ps_4', 'ps_5', 'ps_6', 'ps_7', 'ps_8', 'ps_9', 'ps_10', 'ps_11', 'ps_12'],
+                das28: ['das_dolor', 'das_inflam', 'das_eva'],
+                asdas: ['asdas_back', 'asdas_peripheral', 'asdas_entheseal', 'asdas_pga', 'asdas_stiffness'],
+                dapsa: ['dapsa_das', 'dapsa_dis', 'dapsa_pcr', 'dapsa_pain', 'dapsa_pga'],
+                basfi: ['basfi_1', 'basfi_2', 'basfi_3', 'basfi_4', 'basfi_5', 'basfi_6', 'basfi_7', 'basfi_8', 'basfi_9', 'basfi_10']
+            };
+
+            const radioGroups = {
+                morisky: ['mor_0', 'mor_1', 'mor_2', 'mor_3'],
+                mars: ['mar_0', 'mar_1', 'mar_2', 'mar_3', 'mar_4'],
+                asashi: ['asas_1', 'asas_2', 'asas_3', 'asas_4', 'asas_5', 'asas_6', 'asas_7', 'asas_8', 'asas_9', 'asas_10', 'asas_11', 'asas_12', 'asas_13', 'asas_14', 'asas_15', 'asas_16', 'asas_17'],
+                rapid3: ['rap_f1', 'rap_f2', 'rap_f3', 'rap_f4', 'rap_f5', 'rap_f6', 'rap_f7', 'rap_f8', 'rap_f9', 'rap_f10']
+            };
+
+            const missingValues = (required[type] || []).filter(id => !hasValue(id));
+            const missingRadios = (radioGroups[type] || []).filter(name => !hasChecked(name));
+
+            if (type === 'rapid3') {
+                if (!hasValue('rap_pain')) missingValues.push('rap_pain');
+                if (!hasValue('rap_pga')) missingValues.push('rap_pga');
+            }
+
+            if (type === 'das28') {
+                const method = document.querySelector('input[name="das_method"]:checked')?.value;
+                if (method === 'vsg' && !hasValue('das_vsg')) missingValues.push('das_vsg');
+                if (method === 'pcr' && !hasValue('das_pcr')) missingValues.push('das_pcr');
+            }
+
+            if (type === 'asdas') {
+                const method = document.querySelector('input[name="asdas_method"]:checked')?.value;
+                if (method === 'crp' && !hasValue('asdas_crp_val')) missingValues.push('asdas_crp_val');
+                if (method === 'esr' && !hasValue('asdas_esr_val')) missingValues.push('asdas_esr_val');
+            }
+
+            if (missingValues.length > 0 || missingRadios.length > 0) {
+                showToast('Complete todos los campos obligatorios antes de calcular');
+                return false;
+            }
+            return true;
+        }
+
+        function performCalculation() {
+            let result = 0, txt = '', colorClass = 'bg-gray-50 border-gray-200 text-gray-800';
+
+            if (!ensureRequiredFields(currentCalcType)) return;
+            
+            if (currentCalcType === 'basdai') {
+                let s = 0; for(let i=1; i<=4; i++) s += parseFloat(document.getElementById(`bas_${i}`).value)||0;
+                let s2 = (parseFloat(document.getElementById('bas_5').value)||0 + parseFloat(document.getElementById('bas_6').value)||0)/2;
+                result = 0.2 * (s + s2); // Formula Correcta: 0.2 * (Q1+Q2+Q3+Q4 + (Q5+Q6)/2)
+                if(result >= 4) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `BASDAI: ${result.toFixed(1)} (${result>=4?'Actividad Alta':'Controlada'})`;
+            } 
+            else if (currentCalcType === 'rapid3') {
+                let f = 0; 
+                // Sumar radio buttons de función
+                for(let i=1; i<=10; i++) {
+                    const radios = document.getElementsByName(`rap_f${i}`);
+                    for(let r of radios) if(r.checked) f += parseFloat(r.value);
+                }
+                let fn = f / 3; 
+                let p = parseFloat(document.getElementById('rap_pain').value)||0;
+                let g = parseFloat(document.getElementById('rap_pga').value)||0;
+                result = fn + p + g; 
+                if(result > 12) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if(result > 6) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `RAPID3: ${result.toFixed(1)} / 30`;
+            }
+            else if (currentCalcType === 'haq') {
+                // HAQ Logic con radio buttons
+                const categories = 8;
+                let sum = 0, valid = 0;
+                // Simplificado para demo: asumimos 2 preguntas por cat (aprox)
+                // Iterar categorías 0-7
+                for(let c=0; c<8; c++) {
+                    let maxCat = 0;
+                    // Check items in cat (id scheme haq_cat_C_q_Q)
+                    for(let q=0; q<3; q++) { // Max 3 preguntas/cat
+                        const radios = document.getElementsByName(`haq_cat_${c}_q_${q}`);
+                        if(radios.length > 0) {
+                            for(let r of radios) if(r.checked) maxCat = Math.max(maxCat, parseFloat(r.value));
+                        }
+                    }
+                    const aid = document.getElementById(`haq_aid_${c+1}`);
+                    if(aid && aid.checked && maxCat < 2) maxCat = 2;
+                    sum += maxCat; valid++;
+                }
+                result = sum/valid;
+                if(result > 2) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if(result > 1) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `HAQ-DI: ${result.toFixed(2)}`;
+            }
+            else if (currentCalcType === 'psaid') {
+                let s = 0;
+                const weights = [3,2,2,2,2,2,2,1,1,1,1,1]; 
+                for(let i=1; i<=12; i++) s += (parseFloat(document.getElementById(`ps_${i}`).value)||0) * weights[i-1];
+                result = s / 20;
+                if(result >= 4) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `PSAID: ${result.toFixed(1)} / 10`;
+            }
+            else if (currentCalcType === 'asashi') {
+                let s = 0;
+                for(let i=1; i<=17; i++) {
+                    const radios = document.getElementsByName(`asas_${i}`);
+                    for(let r of radios) if(r.checked) s += parseInt(r.value);
+                }
+                result = s;
+                if(result >= 10) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else colorClass = 'bg-gray-50 border-gray-200 text-gray-800';
+                txt = `ASAS-HI: ${result} / 17 (0=Buena, 17=Mala)`;
+            }
+            else if (currentCalcType === 'sledai') {
+                let s = 0;
+                const lab = document.getElementById('sledai_lab_toggle').checked;
+                // Sumar todos los checkboxes
+                document.querySelectorAll('#calculator-panel input[type="checkbox"]').forEach(cb => {
+                    if(cb.id.startsWith('sle_') && cb.checked) {
+                        if(cb.id.includes('_8_')) s+=8;
+                        if(cb.id.includes('_4_')) s+=4;
+                        if(cb.id.includes('_2_')) s+=2;
+                        if(cb.id.includes('_1_')) s+=1;
+                    }
+                });
+                result = s;
+                if(result >= 6) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if(result > 0) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `SLEDAI-2K ${lab ? '' : '(Clínico)'}: ${result}`;
+            }
+            else if (currentCalcType === 'morisky') {
+                 let correct = 0;
+                 for(let i=0; i<4; i++) {
+                    const radios = document.getElementsByName(`mor_${i}`);
+                    for(let r of radios) if(r.checked && r.value === '1') correct++; 
+                 }
+                 result = correct;
+                 if(result < 4) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                 else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                 txt = result === 4 ? "Adherente (4/4)" : "No Adherente (<4)";
+            }
+            else if (currentCalcType === 'mars') {
+                let s = 0; 
+                for(let i=0; i<5; i++) {
+                    const radios = document.getElementsByName(`mar_${i}`);
+                    for(let r of radios) if(r.checked) s += parseFloat(r.value);
+                }
+                result = s;
+                if(result >= 23) colorClass = 'bg-green-50 border-green-200 text-green-800';
+                else colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                txt = `MARS-5: ${result}/25`;
+            }
+            else if (currentCalcType === 'das28') {
+                const method = document.querySelector('input[name="das_method"]:checked').value;
+                const dolor = parseFloat(document.getElementById('das_dolor').value) || 0;
+                const inflam = parseFloat(document.getElementById('das_inflam').value) || 0;
+                const eva = parseFloat(document.getElementById('das_eva').value) || 0;
+                
+                if(method === 'vsg') {
+                    const vsg = parseFloat(document.getElementById('das_vsg').value) || 1;
+                    // DAS28-ESR = 0.56*sqrt(TJC28) + 0.28*sqrt(SJC28) + 0.70*ln(ESR) + 0.014*VAS
+                    result = 0.56 * Math.sqrt(dolor) + 0.28 * Math.sqrt(inflam) + 0.70 * Math.log(vsg) + 0.014 * eva;
+                } else {
+                    const pcr = parseFloat(document.getElementById('das_pcr').value) || 0.1;
+                    // DAS28-CRP = 0.56*sqrt(TJC28) + 0.28*sqrt(SJC28) + 0.36*ln(CRP+1) + 0.014*VAS + 0.96
+                    result = 0.56 * Math.sqrt(dolor) + 0.28 * Math.sqrt(inflam) + 0.36 * Math.log(pcr + 1) + 0.014 * eva + 0.96;
+                }
+                
+                let activityLevel = '';
+                if(result > 5.1) {
+                    colorClass = 'bg-red-50 border-red-200 text-red-800';
+                    activityLevel = 'ALTA ACTIVIDAD';
+                } else if(result >= 3.2) {
+                    colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                    activityLevel = 'ACTIVIDAD MODERADA';
+                } else if(result >= 2.6) {
+                    colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                    activityLevel = 'BAJA ACTIVIDAD';
+                } else {
+                    colorClass = 'bg-green-50 border-green-200 text-green-800';
+                    activityLevel = 'REMISIÓN';
+                }
+                txt = `DAS28-${method.toUpperCase()}: ${result.toFixed(2)} (${activityLevel})`;
+            }
+            else if (currentCalcType === 'asdas') {
+                const method = document.querySelector('input[name="asdas_method"]:checked').value;
+                const back = parseFloat(document.getElementById('asdas_back').value) || 0;
+                const peripheral = parseFloat(document.getElementById('asdas_peripheral').value) || 0;
+                const entheseal = parseFloat(document.getElementById('asdas_entheseal').value) || 0;
+                const pga = parseFloat(document.getElementById('asdas_pga').value) || 0;
+                const stiffness = parseFloat(document.getElementById('asdas_stiffness').value) || 0;
+                
+                if(method === 'crp') {
+                    const crp = parseFloat(document.getElementById('asdas_crp_val').value) || 0.1;
+                    // ASDAS-CRP = 0.12*back + 0.06*duration_morning + 0.11*pga + 0.07*peripheral + 0.58*ln(CRP+1)
+                    result = 0.12 * back + 0.06 * stiffness + 0.11 * pga + 0.07 * peripheral + 0.07 * entheseal + 0.58 * Math.log(crp * 10 + 1);
+                } else {
+                    const esr = parseFloat(document.getElementById('asdas_esr_val').value) || 1;
+                    // ASDAS-ESR = 0.08*back + 0.07*duration_morning + 0.11*pga + 0.09*peripheral + 0.29*sqrt(ESR)
+                    result = 0.08 * back + 0.07 * stiffness + 0.11 * pga + 0.09 * peripheral + 0.09 * entheseal + 0.29 * Math.sqrt(esr);
+                }
+                
+                let activityLevel = '';
+                if(result > 3.5) {
+                    colorClass = 'bg-red-50 border-red-200 text-red-800';
+                    activityLevel = 'ACTIVIDAD MUY ALTA';
+                } else if(result >= 2.1) {
+                    colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                    activityLevel = 'ACTIVIDAD ALTA';
+                } else if(result >= 1.3) {
+                    colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                    activityLevel = 'ACTIVIDAD MODERADA';
+                } else {
+                    colorClass = 'bg-green-50 border-green-200 text-green-800';
+                    activityLevel = 'INACTIVA';
+                }
+                txt = `ASDAS-${method.toUpperCase()}: ${result.toFixed(2)} (${activityLevel})`;
+            }
+            else if (currentCalcType === 'dapsa') {
+                const das = parseFloat(document.getElementById('dapsa_das').value) || 0;
+                const dis = parseFloat(document.getElementById('dapsa_dis').value) || 0;
+                const pcr = parseFloat(document.getElementById('dapsa_pcr').value) || 0;
+                const pain = parseFloat(document.getElementById('dapsa_pain').value) || 0;
+                const pga = parseFloat(document.getElementById('dapsa_pga').value) || 0;
+                result = das + dis + pcr + pain + pga;
+                let nivel;
+                if (result > 28) { colorClass = 'bg-red-50 border-red-200 text-red-800'; nivel = '🔴 Actividad ALTA'; }
+                else if (result > 14) { colorClass = 'bg-orange-50 border-orange-200 text-orange-800'; nivel = '🟠 Actividad MODERADA'; }
+                else if (result > 4) { colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800'; nivel = '🟡 Actividad BAJA'; }
+                else { colorClass = 'bg-green-50 border-green-200 text-green-800'; nivel = '🟢 REMISIÓN'; }
+                txt = `DAPSA: ${result.toFixed(1)} — ${nivel}`;
+            }
+            else if (currentCalcType === 'basfi') {
+                let s = 0;
+                for(let i=1; i<=10; i++) s += parseFloat(document.getElementById(`basfi_${i}`).value) || 0;
+                result = s / 10;
+                if (result > 4) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `BASFI: ${result.toFixed(1)} / 10 (${result > 4 ? 'Funcionalidad afectada' : 'Funcionalidad preservada'})`;
+            }
+            
+            // Save and Feedback
+            currentPatient.scores[currentCalcType.toUpperCase()] = typeof result === 'number' ? result.toFixed(1) : result;
+            
+            // Mark checklist
+            const check = document.getElementById(`check_calc_${currentCalcType}`);
+            if(check) { check.checked = true; }
+
+            // Display
+            const d = document.getElementById('calc-result-display'); 
+            d.textContent = txt; 
+            d.className = `mt-3 p-4 rounded-lg text-center font-bold text-lg border ${colorClass}`;
+            d.classList.remove('hidden');
+            
+            // NO auto-save - manual save only
+            checkAlerts();
+        }
+
+        // --- ALERTS ---
+        function checkAlerts() {
+            const container = document.getElementById('alerts-area'); if(!container) return; container.innerHTML = '';
+            
+            // Alertas por EVA
+            if (currentPatient.eva >= 7) addAlert(container, 'Dolor Severo', `EVA ${currentPatient.eva}. Evaluar ajuste analgésico.`, 'alert-octagon', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.eva >= 4) addAlert(container, 'Dolor Moderado', `EVA ${currentPatient.eva}. Monitorear evolución.`, 'alert-circle', 'bg-orange-50 text-orange-800 border-orange-200');
+            
+            // Alertas por índices específicos
+            if (currentPatient.scores['BASDAI'] >= 4) addAlert(container, 'Actividad EA Alta', `BASDAI ≥ 4. Considerar ajuste terapéutico.`, 'trending-up', 'bg-orange-50 text-orange-800 border-orange-200');
+            
+            // DAS28 alertas
+            if (currentPatient.scores['DAS28'] > 5.1) addAlert(container, 'ALTA ACTIVIDAD AR', `DAS28 > 5.1. Informar URGENTE a reumatólogo.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.scores['DAS28'] >= 3.2) addAlert(container, 'Actividad AR Moderada', `DAS28 ${currentPatient.scores['DAS28']}. Considerar optimización.`, 'activity', 'bg-orange-50 text-orange-800 border-orange-200');
+            else if (currentPatient.scores['DAS28'] && currentPatient.scores['DAS28'] < 2.6) addAlert(container, 'Remisión AR', `DAS28 < 2.6. Enfermedad controlada.`, 'check-circle', 'bg-green-50 text-green-800 border-green-200');
+            
+            // BASFI alertas
+            if (currentPatient.scores['BASFI'] > 4) addAlert(container, 'Funcionalidad Afectada EA', `BASFI > 4. Evaluar necesidad de fisioterapia.`, 'activity', 'bg-orange-50 text-orange-800 border-orange-200');
+            
+            // DAPSA alertas
+            if (currentPatient.scores['DAPSA'] > 28) addAlert(container, 'Actividad Alta APs', `DAPSA > 28. Considerar ajuste terapéutico.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.scores['DAPSA'] > 14) addAlert(container, 'Actividad Moderada APs', `DAPSA 14-28. Monitorear respuesta.`, 'activity', 'bg-orange-50 text-orange-800 border-orange-200');
+            else if (currentPatient.scores['DAPSA'] && currentPatient.scores['DAPSA'] <= 4) addAlert(container, 'Remisión APs', `DAPSA ≤ 4. Excelente control.`, 'check-circle', 'bg-green-50 text-green-800 border-green-200');
+            
+            // ASDAS alertas
+            if (currentPatient.scores['ASDAS'] > 3.5) addAlert(container, 'ACTIVIDAD MUY ALTA EA', `ASDAS > 3.5. Evaluar cambio terapéutico.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.scores['ASDAS'] >= 2.1) addAlert(container, 'Actividad EA Alta', `ASDAS ${currentPatient.scores['ASDAS']}. Monitorear respuesta.`, 'activity', 'bg-orange-50 text-orange-800 border-orange-200');
+            else if (currentPatient.scores['ASDAS'] && currentPatient.scores['ASDAS'] < 1.3) addAlert(container, 'EA Inactiva', `ASDAS < 1.3. Excelente control.`, 'check-circle', 'bg-green-50 text-green-800 border-green-200');
+            
+            if (currentPatient.scores['RAPID3'] >= 12) addAlert(container, 'Gravedad AR Alta', `RAPID3 > 12. Alta carga sintomática.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
+            if (currentPatient.scores['SLEDAI'] >= 6) addAlert(container, 'Actividad Lúpica Significativa', `SLEDAI > 6. Coordinar con médico.`, 'shield-alert', 'bg-red-50 text-red-800 border-red-200');
+            
+            // Alertas de adherencia
+            if (currentPatient.scores['MORISKY'] < 4) addAlert(container, 'Adherencia Subóptima', `Morisky < 4. Intervención educativa necesaria.`, 'user-x', 'bg-orange-50 text-orange-800 border-orange-200');
+            if (currentPatient.scores['MARS'] < 23) addAlert(container, 'Riesgo No Adherencia', `MARS-5 < 23. Evaluar barreras.`, 'user-minus', 'bg-yellow-50 text-yellow-800 border-yellow-200');
+        }
+
+        function addAlert(container, title, msg, icon, classes) {
+            container.innerHTML += `<div class="p-3.5 rounded-lg border flex items-start gap-3 ${classes}"><i data-lucide="${icon}" class="w-5 h-5 mt-0.5"></i><div><h4 class="font-semibold text-sm tracking-tight">${title}</h4><p class="text-sm opacity-90 leading-5">${msg}</p></div></div>`;
+            lucide.createIcons();
+        }
+
+        // --- STATE MANAGEMENT ---
+        function toggleCheck(id) {
+            const cb = document.getElementById(id);
+            currentPatient.checklist[id] = cb.checked;
+            // NO auto-save - manual save only
+        }
+        function updateEVA(val) {
+            currentPatient.eva = val;
+            const disp = document.getElementById('eva-display'); if(disp) disp.textContent = val;
+            checkAlerts(); 
+            // NO auto-save - manual save only
+        }
+        function triggerReset() { openModal('Reiniciar Paciente', 'Se borrarán todos los datos actuales. ¿Continuar?', executeReset); }
+        function executeReset() { closeModal(); currentPatient = { id:'', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] }; goToView('pathology'); updateSidebarContext(); enableSideActions(false); showToast("Sesión reiniciada"); }
+
+        function openModal(title, msg, onConfirm) {
+            const m = document.getElementById('confirmation-modal');
+            const titleEl = document.getElementById('modal-title');
+            if (titleEl) titleEl.innerHTML = `<i data-lucide="alert-triangle" class="text-amber-500 w-5 h-5"></i> ${title}`;
+            document.getElementById('modal-message').textContent = msg;
+            const btn = document.getElementById('modal-confirm-btn');
+            const newBtn = btn.cloneNode(true); btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', onConfirm);
+            m.classList.remove('hidden');
+            setTimeout(() => { m.classList.add('modal-enter-active'); m.querySelector('.relative').classList.add('modal-content-active'); }, 10);
+            lucide.createIcons();
+        }
+        function closeModal() {
+            const m = document.getElementById('confirmation-modal');
+            m.classList.remove('modal-enter-active'); m.querySelector('.relative').classList.remove('modal-content-active');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        }
+        function loadState() {
+            // No carga datos de pacientes anteriores
+            // Solo asegura que el paciente actual esté limpio al iniciar
+            currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+            updateSidebarContext();
+            goToView('pathology');
+        }
+
+        // --- EXPORT ---
+        function showToast(m) { const t = document.getElementById('toast'); document.getElementById('toast-message').textContent = m; t.classList.remove('translate-y-20', 'opacity-0'); setTimeout(()=>t.classList.add('translate-y-20', 'opacity-0'), 3000); }
+        function setTemporaryButtonState(buttonId, successText, successClasses, defaultClasses) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> ${successText}`;
+            defaultClasses.forEach(cls => btn.classList.remove(cls));
+            successClasses.forEach(cls => btn.classList.add(cls));
+            lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                successClasses.forEach(cls => btn.classList.remove(cls));
+                defaultClasses.forEach(cls => btn.classList.add(cls));
+                lucide.createIcons();
+            }, 2000);
+        }
+        
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageW = doc.internal.pageSize.getWidth();
+            const margin = 20;
+            let y = 20;
+
+            doc.setFillColor(30, 41, 59);
+            doc.rect(0, 0, pageW, 28, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('INFORME REUMACARE', margin, 12);
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            const now = new Date();
+            doc.text(`Fecha: ${now.toLocaleDateString('es-ES')} ${now.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}`, margin, 20);
+            doc.text(`Centro: ${sessionSettings.hospital || '—'} | Profesional: ${sessionSettings.nurse || '—'}`, margin, 25);
+            y = 38;
+
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('DATOS DEL PACIENTE', margin, y);
+            y += 6;
+            doc.setDrawColor(200, 210, 220);
+            doc.line(margin, y, pageW - margin, y);
+            y += 5;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Paciente: ${currentPatient.name || 'No especificado'}${currentPatient.id ? ' | ID/NHC: ' + currentPatient.id : ''}`, margin, y);
+            y += 6;
+            doc.text(`Patología: ${currentPatient.pathologyName || '—'} | Tipo de visita: ${currentPatient.visitName || '—'}`, margin, y);
+            y += 10;
+
+            const sc = currentPatient.scores;
+            const eva = parseFloat(currentPatient.eva) || 0;
+            const alertLines = [];
+            if (parseFloat(sc['DAS28']) >= 5.1) alertLines.push('DAS28 actividad alta: informar a reumatología');
+            else if (parseFloat(sc['DAS28']) >= 3.2) alertLines.push('DAS28 actividad moderada');
+            if (parseFloat(sc['ASDAS']) >= 3.5) alertLines.push('ASDAS actividad muy alta');
+            else if (parseFloat(sc['ASDAS']) >= 2.1) alertLines.push('ASDAS actividad alta');
+            if (parseFloat(sc['DAPSA']) > 28) alertLines.push('DAPSA actividad alta');
+            if (parseFloat(sc['BASDAI']) >= 4) alertLines.push('BASDAI >= 4');
+            if (parseFloat(sc['SLEDAI']) >= 6) alertLines.push('SLEDAI actividad lúpica significativa');
+            if (parseFloat(sc['RAPID3']) >= 12) alertLines.push('RAPID3 severo');
+            if (eva >= 7) alertLines.push('Dolor severo EVA >= 7');
+
+            if (alertLines.length > 0) {
+                doc.setFillColor(254, 226, 226);
+                doc.rect(margin - 2, y - 4, pageW - margin * 2 + 4, alertLines.length * 6 + 8, 'F');
+                doc.setDrawColor(239, 68, 68);
+                doc.rect(margin - 2, y - 4, pageW - margin * 2 + 4, alertLines.length * 6 + 8, 'S');
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(185, 28, 28);
+                doc.text('ALERTAS CLINICAS', margin, y);
+                y += 6;
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(9);
+                alertLines.forEach(line => {
+                    doc.text(`- ${line}`, margin + 2, y);
+                    y += 6;
+                });
+                y += 4;
+                doc.setTextColor(30, 41, 59);
+            }
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('INDICES Y SCORES', margin, y);
+            y += 6;
+            doc.line(margin, y, pageW - margin, y);
+            y += 5;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            if (eva) {
+                doc.text(`EVA (Dolor): ${eva} / 10`, margin, y);
+                y += 6;
+            }
+            const scoreLabels = {
+                'DAS28': 'DAS28',
+                'ASDAS': 'ASDAS',
+                'DAPSA': 'DAPSA',
+                'BASDAI': 'BASDAI',
+                'BASFI': 'BASFI',
+                'ASASHI': 'ASAS-HI',
+                'RAPID3': 'RAPID3',
+                'HAQ': 'HAQ-DI',
+                'PSAID': 'PSAID',
+                'SLEDAI': 'SLEDAI-2K',
+                'MORISKY': 'Morisky MMAS-4',
+                'MARS': 'MARS-5'
+            };
+            Object.keys(sc).forEach(key => {
+                doc.text(`${scoreLabels[key] || key}: ${sc[key]}`, margin, y);
+                y += 6;
+            });
+            y += 4;
+
+            const checkedItems = [];
+            document.querySelectorAll('#checklist-renderer input[type="checkbox"]:checked').forEach(cb => {
+                const label = cb.closest('label')?.querySelector('span')?.textContent || cb.id;
+                if (label && label.trim().length > 2) checkedItems.push(label.trim());
+            });
+
+            if (checkedItems.length > 0) {
+                if (y > 240) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('INTERVENCIONES REALIZADAS', margin, y);
+                y += 6;
+                doc.line(margin, y, pageW - margin, y);
+                y += 5;
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                checkedItems.forEach(item => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    const lines = doc.splitTextToSize(`- ${item}`, pageW - margin * 2);
+                    doc.text(lines, margin, y);
+                    y += lines.length * 4 + 2;
+                });
+            }
+
+            const filename = `Informe_${(currentPatient.pathology || 'reuma').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+            showToast('PDF generado');
+            setTemporaryButtonState(
+                'btn-pdf-side',
+                'PDF generado',
+                ['bg-green-600', 'text-white', 'border-transparent', 'hover:bg-green-700'],
+                ['bg-white', 'text-clinical-700', 'border-clinical-300', 'hover:bg-clinical-50', 'hover:text-clinical-900']
+            );
+        }
+
+        function generateTXTReport() {
+            const fecha = new Date().toLocaleDateString('es-ES');
+            const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            
+            let report = [];
+            
+            // Cabecera
+            report.push('═══════════════════════════════════════════');
+            report.push('         INFORME REUMACARE');
+            report.push('═══════════════════════════════════════════');
+            report.push('');
+            report.push(`FECHA: ${fecha} ${hora}`);
+            report.push(`CENTRO: ${sessionSettings.hospital || 'No especificado'}`);
+            report.push(`PROFESIONAL: ${sessionSettings.nurse || 'No especificado'}`);
+            report.push('');
+            
+            // Datos del paciente
+            report.push('═══════════════════════════════════════════');
+            report.push('         DATOS DEL PACIENTE');
+            report.push('═══════════════════════════════════════════');
+            report.push('');
+            report.push(`Nombre: ${currentPatient.name || 'No especificado'}`);
+            report.push(`NHC/ID: ${currentPatient.id || 'No especificado'}`);
+            report.push(`Patología: ${currentPatient.pathologyName || 'No especificada'}`);
+            report.push(`Tipo de Visita: ${currentPatient.visitName || 'No especificada'}`);
+            report.push('');
+            
+            // Scores y mediciones
+            report.push('═══════════════════════════════════════════');
+            report.push('         SCORES Y MEDICIONES');
+            report.push('═══════════════════════════════════════════');
+            report.push('');
+            
+            if (Object.keys(currentPatient.scores).length > 0) {
+                report.push('ÍNDICES DE ACTIVIDAD:');
+                const scoreOrder = ['DAS28', 'ASDAS', 'BASDAI', 'PSAID', 'SLEDAI', 'RAPID3', 'HAQ', 'ASASHI', 'BASFI', 'DAPSA', 'MORISKY', 'MARS'];
+                
+                scoreOrder.forEach(score => {
+                    if (currentPatient.scores[score] !== undefined) {
+                        let activityLevel = '';
+                        const val = parseFloat(currentPatient.scores[score]);
+                        
+                        if (score === 'DAS28') {
+                            if (val > 5.1) activityLevel = 'ALTA ACTIVIDAD';
+                            else if (val >= 3.2) activityLevel = 'ACTIVIDAD MODERADA';
+                            else if (val >= 2.6) activityLevel = 'BAJA ACTIVIDAD';
+                            else activityLevel = 'REMISIÓN';
+                        } else if (score === 'ASDAS') {
+                            if (val > 3.5) activityLevel = 'ACTIVIDAD MUY ALTA';
+                            else if (val >= 2.1) activityLevel = 'ACTIVIDAD ALTA';
+                            else if (val >= 1.3) activityLevel = 'ACTIVIDAD MODERADA';
+                            else activityLevel = 'INACTIVA';
+                        } else if (score === 'BASDAI') {
+                            if (val >= 4) activityLevel = 'ACTIVIDAD ALTA';
+                            else activityLevel = 'CONTROLADA';
+                        } else if (score === 'SLEDAI') {
+                            if (val >= 6) activityLevel = 'ACTIVIDAD SIGNIFICATIVA';
+                            else if (val > 0) activityLevel = 'ACTIVIDAD LEVE';
+                            else activityLevel = 'INACTIVA';
+                        } else if (score === 'RAPID3') {
+                            if (val >= 12) activityLevel = 'SEVERO';
+                            else if (val >= 6) activityLevel = 'MODERADO';
+                            else activityLevel = 'LEVE';
+                        }
+                        
+                        report.push(`• ${score}: ${currentPatient.scores[score]}${activityLevel ? ' - ' + activityLevel : ''}`);
+                    }
+                });
+                
+                // Otros scores no listados en orden específico
+                Object.keys(currentPatient.scores).forEach(score => {
+                    if (!scoreOrder.includes(score)) {
+                        report.push(`• ${score}: ${currentPatient.scores[score]}`);
+                    }
+                });
+                report.push('');
+            }
+            
+            if (currentPatient.eva !== null && currentPatient.eva !== undefined) {
+                report.push('ESCALAS DE MEDICIÓN:');
+                let evaLevel = '';
+                if (currentPatient.eva >= 7) evaLevel = 'DOLOR SEVERO';
+                else if (currentPatient.eva >= 4) evaLevel = 'DOLOR MODERADO';
+                else evaLevel = 'DOLOR LEVE';
+                report.push(`• EVA Dolor: ${currentPatient.eva}/10 - ${evaLevel}`);
+                report.push('');
+            }
+            
+            // Alertas clínicas
+            const alerts = [];
+            if (currentPatient.eva >= 7) alerts.push('DOLOR SEVERO - Evaluar ajuste analgésico');
+            if (currentPatient.scores['DAS28'] > 5.1) alerts.push('ALTA ACTIVIDAD AR - Informar a reumatólogo');
+            if (currentPatient.scores['DAS28'] >= 3.2 && currentPatient.scores['DAS28'] <= 5.1) alerts.push('ACTIVIDAD MODERADA AR - Considerar optimización');
+            if (currentPatient.scores['ASDAS'] > 3.5) alerts.push('ACTIVIDAD MUY ALTA EA - Evaluar cambio terapéutico');
+            if (currentPatient.scores['ASDAS'] >= 2.1 && currentPatient.scores['ASDAS'] <= 3.5) alerts.push('ACTIVIDAD ALTA EA - Monitorear respuesta');
+            if (currentPatient.scores['BASDAI'] >= 4) alerts.push('BASDAI ≥ 4 - Considerar cambio de biológico');
+            if (currentPatient.scores['SLEDAI'] >= 6) alerts.push('Actividad Lúpica Significativa - Coordinar con médico');
+            if (currentPatient.scores['RAPID3'] >= 12) alerts.push('RAPID3 Severo - Alta carga sintomática');
+            if (currentPatient.scores['MORISKY'] < 4) alerts.push('Adherencia Subóptima - Intervención educativa');
+            if (currentPatient.scores['MARS'] < 23) alerts.push('Riesgo No Adherencia - Evaluar barreras');
+            
+            if (alerts.length > 0) {
+                report.push('═══════════════════════════════════════════');
+                report.push('         ALERTAS CLÍNICAS');
+                report.push('═══════════════════════════════════════════');
+                report.push('');
+                alerts.forEach(alert => {
+                    report.push(`⚠ ${alert}`);
+                });
+                report.push('');
+            }
+            
+            // Ítems completados
+            const completedItems = Object.keys(currentPatient.checklist).filter(id => currentPatient.checklist[id]);
+            if (completedItems.length > 0) {
+                report.push('═══════════════════════════════════════════');
+                report.push('         ÍTEMS COMPLETADOS');
+                report.push('═══════════════════════════════════════════');
+                report.push('');
+                
+                // Agrupar por secciones (basado en prefijos de IDs)
+                const sections = {
+                    'edu_tnf': 'EDUCACIÓN ANTI-TNF',
+                    'edu_il': 'EDUCACIÓN FÁRMACOS',
+                    'edu_rtx': 'EDUCACIÓN FÁRMACOS',
+                    'edu_jak': 'EDUCACIÓN FÁRMACOS',
+                    'edu_aba': 'EDUCACIÓN FÁRMACOS',
+                    'edu_mtx': 'EDUCACIÓN FÁRMACOS',
+                    'edu_path': 'EDUCACIÓN ESPECÍFICA POR PATOLOGÍA',
+                    'val': 'VALORACIÓN INICIAL',
+                    'edu': 'EDUCACIÓN EN SALUD',
+                    'farm': 'INFORMACIÓN FARMACOTERAPIA',
+                    'admin': 'ADMINISTRACIÓN DEL TRATAMIENTO',
+                    'efec': 'EFECTOS ADVERSOS Y PRECAUCIONES',
+                    'mej': 'EXPECTATIVAS Y ADHERENCIA',
+                    'ver': 'VERIFICACIÓN DE DATOS',
+                    'resp': 'EVALUACIÓN DE RESPUESTA',
+                    'bro': 'EVALUACIÓN DEL BROTE',
+                    'seg': 'SEGUIMIENTO Y CONTROL',
+                    'vac': 'VACUNACIÓN',
+                    'prev': 'PREVENCIÓN',
+                    'com': 'COMORBILIDADES',
+                    'ana': 'ANALÍTICA'
+                };
+                
+                const groupedItems = {};
+                completedItems.forEach(id => {
+                    let section = 'OTROS';
+                    for (let prefix in sections) {
+                        if (id.startsWith(prefix)) {
+                            section = sections[prefix];
+                            break;
+                        }
+                    }
+                    if (!groupedItems[section]) groupedItems[section] = [];
+                    groupedItems[section].push(id);
+                });
+                
+                Object.keys(groupedItems).forEach(section => {
+                    report.push(`${section}:`);
+                    groupedItems[section].forEach(id => {
+                        // Intentar obtener el texto del checkbox desde el DOM o usar ID
+                        const label = getCheckboxLabel(id) || id;
+                        report.push(`  ✓ ${label}`);
+                    });
+                    report.push('');
+                });
+            }
+            
+            // Pie de página
+            report.push('═══════════════════════════════════════════');
+            report.push('  Generado por ReumaCare - Uso clínico');
+            report.push('═══════════════════════════════════════════');
+            
+            const finalReport = report.join('\n');
+            
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(finalReport).then(() => {
+                showToast('Informe copiado al portapapeles');
+                setTemporaryButtonState(
+                    'btn-txt-side',
+                    'Copiado',
+                    ['bg-green-600', 'hover:bg-green-700'],
+                    ['bg-blue-600', 'hover:bg-blue-700']
+                );
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                if (fallbackCopyToClipboard(finalReport)) {
+                    showToast('Informe copiado (modo compatible)');
+                    setTemporaryButtonState(
+                        'btn-txt-side',
+                        'Copiado',
+                        ['bg-green-600', 'hover:bg-green-700'],
+                        ['bg-blue-600', 'hover:bg-blue-700']
+                    );
+                } else {
+                    showToast('Error al copiar. Copie manualmente.');
+                    console.log(finalReport);
+                }
+            });
+        }
+
+        function fallbackCopyToClipboard(text) {
+            try {
+                const area = document.createElement('textarea');
+                area.value = text;
+                area.style.position = 'fixed';
+                area.style.opacity = '0';
+                document.body.appendChild(area);
+                area.focus();
+                area.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(area);
+                return ok;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        function getCheckboxLabel(id) {
+            const cb = document.getElementById(id);
+            if (cb && cb.closest('label')) {
+                const textSpan = cb.closest('label').querySelector('span');
+                if (textSpan) return textSpan.textContent.trim();
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>
