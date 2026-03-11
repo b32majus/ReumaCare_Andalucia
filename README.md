@@ -1,71 +1,132 @@
-# ReumaCare_Andalucia
+# ReumaCare Andalucia
 
-Herramienta web de apoyo para la consulta de Enfermeria Reumatologica en Andalucia.
+Herramienta web de apoyo a la consulta de enfermeria reumatologica en Andalucia.
 
-ReumaCare_Andalucia centraliza checklists clinicos, escalas de actividad, alertas y exportacion de informes para visitas de inicio, educacion terapeutica, seguimiento, brote y vacunacion.
+La aplicacion funciona en una unica pagina HTML y centraliza protocolos asistenciales, escalas clinicas, alertas, situaciones especiales, fichas tecnicas oficiales y exportacion de informes.
 
-## Caracteristicas principales
+## Archivo de referencia
 
-- Protocolos estructurados por patologia: EA, APs, AR, LES y vacunacion.
-- Escalas clinicas integradas (segun contexto): BASDAI, BASFI, ASDAS, DAPSA, DAS28, RAPID3, HAQ-DI, PSAID, SLEDAI-2K, ASAS-HI, Morisky y MARS-5.
-- Seguimiento telefonico optimizado con escalas aplicables por entrevista.
-- Panel de Situaciones Especiales (infecciones, embarazo, cirugia, cardiovascular).
-- Exportacion de informe en PDF y copia de informe TXT al portapapeles.
-- Interfaz orientada a uso en consulta (desktop-first) y compatible con movil.
+- Archivo operativo actual: `index.html`
+- `ReumaCare_vKimi_2.html` es equivalente al `index.html` usado como base de trabajo
+- El resto de HTML de la carpeta son versiones historicas o intermedias
 
-## Estructura del proyecto
+## Patologias incluidas
 
-El proyecto esta implementado como una aplicacion HTML unica:
+- Espondiloartritis Axial (EA)
+- Artritis Psoriasica (APs)
+- Artritis Reumatoide (AR)
+- Lupus Eritematoso Sistemico (LES)
+- Sindrome de Sjogren (SS)
+- Vacunacion en paciente reumatologico/inmunosuprimido
 
-- `ReumaCare_vKimi_2.html` -> version operativa principal.
+## Tipos de visita
 
-Puedes renombrar ese archivo a `index.html` para publicarlo mas facilmente en GitHub Pages.
+- Inicio de enfermedad / tratamiento
+- Educacion terapeutica
+- Seguimiento telefonico postinicio
+- Seguimiento regular
+- Atencion de brote
+- Control vacunal
+
+## Funcionalidades clinicas
+
+- Checklists estructurados por patologia y tipo de visita
+- Registro de EVA de dolor
+- Calculadoras clinicas integradas y coloreadas por puntos de corte
+- Badges de resultado en botones de acceso a escalas
+- Alertas clinicas dinamicas segun resultados
+- Situaciones especiales con panel lateral:
+  - infecciones
+  - embarazo y lactancia
+  - cirugia / perioperatorio
+  - riesgo cardiovascular
+- Panel lateral de fichas tecnicas oficiales CIMA/AEMPS por patologia
+- Buscador rapido para localizar visitas, indices, situaciones especiales, secciones y fichas tecnicas
+- Exportacion a:
+  - PDF
+  - informe TXT copiable al portapapeles
+
+## Indices y escalas integrados
+
+Segun patologia y contexto asistencial:
+
+- BASDAI
+- BASFI
+- ASDAS
+- ASAS Health Index
+- DAPSA
+- PSAID
+- HAQ-DI
+- DAS28
+- RAPID3
+- SLEDAI-2K
+- SLICC/SDI
+- ESSPRI
+- ESSDAI
+- EVA de sequedad oral/ocular
+- Morisky-Green
+- MARS-5
+
+Ademas:
+
+- registro estructurado de entesitis
+  - MASES orientativo en EA
+  - LEI orientativo en APs
+- registro estructurado de dactilitis por dedos
+
+## Exportacion de informes
+
+Los informes generan:
+
+- datos de paciente y contexto asistencial
+- indices y scores registrados
+- hallazgos estructurados de entesitis y dactilitis con localizacion
+- alertas clinicas relevantes
+- intervenciones realizadas del checklist
+
+No se incluyen en "intervenciones realizadas" los marcadores tecnicos internos de calculadoras (`check_calc_*`), porque el resultado del indice ya aparece en la seccion de scores.
 
 ## Uso local
 
-1. Descarga o clona este repositorio.
-2. Abre `ReumaCare_vKimi_2.html` en tu navegador.
-3. Introduce profesional/centro en la pantalla de bienvenida.
-4. Selecciona patologia y tipo de visita.
-5. Completa checklist, escalas y genera informe.
+1. Abrir `index.html` en un navegador moderno
+2. Introducir profesional y centro
+3. Seleccionar patologia y visita
+4. Completar checklist y escalas
+5. Exportar informe si procede
 
 No requiere backend ni instalacion de dependencias.
 
-## Publicacion en GitHub Pages
+Si se quiere servir por HTTP local:
 
-### Opcion recomendada (archivo raiz)
+```bash
+cd "Herramienta Digital"
+python3 -m http.server 4173
+```
 
-1. Renombra `ReumaCare_vKimi_2.html` a `index.html`.
-2. Sube el repositorio a GitHub.
-3. Ve a `Settings` -> `Pages`.
-4. En `Build and deployment`, selecciona:
-   - `Source`: `Deploy from a branch`
-   - `Branch`: `main` (o `master`) y carpeta `/ (root)`
-5. Guarda y espera el despliegue.
-6. Tu web quedara disponible en la URL de GitHub Pages del repositorio.
+## Publicacion
 
-### Opcion alternativa (sin renombrar)
+Para GitHub Pages, publicar el `index.html` en la raiz del repositorio.
 
-Puedes crear un `index.html` minimo que redirija a `ReumaCare_vKimi_2.html`, pero para mantenimiento se recomienda dejar un unico `index.html` principal.
+## Fuentes de contenido
 
-## Privacidad y datos
+- Manual base del proyecto: `Manual Práctica Avanzada en Enfermería Reumatológica_v4`
+- Fichas tecnicas oficiales: CIMA / AEMPS
+- Recomendaciones clinicas y tablas operativas actualizadas segun el contenido del manual y revisiones posteriores aplicadas en la herramienta
 
-- La app funciona en cliente (navegador).
-- No envia datos a servidor externo por defecto.
-- Revisa siempre la politica de privacidad de tu centro antes de uso asistencial.
+## Autoria
 
-## Aviso clinico
+Autores clinicos del manual y del contenido asistencial:
 
-Esta herramienta es de apoyo a la consulta de enfermeria y no sustituye el juicio clinico ni los protocolos oficiales del centro.
+- Carmen Dominguez Quesada
+- Manuel Moreno Galeano
 
-Las decisiones terapeuticas (inicio, suspension o ajuste de tratamiento) deben validarse con el equipo medico responsable.
+Desarrollo tecnico, implementacion digital y evolucion funcional de la herramienta:
 
-## Roadmap sugerido
+- Silvia Marquez Jurado
+  contacto: `b32majus@gmail.com`
 
-- Mejoras continuas de usabilidad en escritorio.
-- Ajustes de contenidos segun protocolos locales.
-- Versionado formal de cambios clinicos y funcionales.
+## Aviso
 
-## Licencia
+La herramienta es de apoyo a la consulta de enfermeria. No sustituye el juicio clinico ni los protocolos oficiales del centro.
 
-Define aqui la licencia que corresponda al proyecto (por ejemplo, MIT, GPL, uso interno, etc.).
+Las decisiones terapeuticas deben validarse con el equipo medico responsable.

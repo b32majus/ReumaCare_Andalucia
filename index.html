@@ -219,6 +219,26 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 overflow-y-auto relative bg-clinical-50 pt-16 md:pt-0">
         <div class="max-w-5xl mx-auto p-5 md:p-8 pb-24">
+            <div id="quick-search-box" class="mb-6 relative">
+                <label for="quick-search-input" class="block text-xs font-semibold text-clinical-500 uppercase tracking-wider mb-2">Buscador rápido</label>
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-clinical-400"></i>
+                    <input
+                        type="text"
+                        id="quick-search-input"
+                        class="w-full rounded-xl border border-clinical-200 bg-white py-3 pl-10 pr-10 text-sm text-clinical-800 shadow-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                        placeholder="Busca índices, visitas, embarazo, cirugía, fichas técnicas..."
+                        oninput="updateQuickSearch(this.value)"
+                        onfocus="updateQuickSearch(this.value)"
+                        onkeydown="handleQuickSearchKeydown(event)"
+                        autocomplete="off"
+                    >
+                    <button id="quick-search-clear" onclick="clearQuickSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-clinical-400 hover:bg-clinical-100 hover:text-clinical-700">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="quick-search-results" class="hidden absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-xl border border-clinical-200 bg-white shadow-xl"></div>
+            </div>
             <div id="app-views">
                 
                 <!-- VIEW 1: PATHOLOGY -->
@@ -245,6 +265,11 @@
                             <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">🦋</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
                             <h3 class="text-lg font-bold text-clinical-800">Lupus Eritematoso</h3>
                             <p class="text-sm text-clinical-500 mt-1">Enfermedad autoinmune sistémica</p>
+                        </button>
+                        <button onclick="selectPathology('SS')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-accent-500 hover:shadow-md transition-all text-left">
+                            <div class="flex items-center justify-between mb-4"><div class="p-3 bg-clinical-100 rounded-lg text-clinical-600 group-hover:bg-accent-500 group-hover:text-white transition-colors text-2xl">💧</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-accent-500"></i></div>
+                            <h3 class="text-lg font-bold text-clinical-800">Síndrome de Sjögren</h3>
+                            <p class="text-sm text-clinical-500 mt-1">Sequedad, fatiga y afectación sistémica</p>
                         </button>
                         <button onclick="selectPathology('VAC')" class="group p-5 bg-white rounded-xl border border-clinical-200 hover:border-blue-500 hover:shadow-md transition-all text-left">
                             <div class="flex items-center justify-between mb-4"><div class="p-3 bg-blue-100 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors text-2xl">💉</div><i data-lucide="chevron-right" class="text-clinical-300 group-hover:text-blue-500"></i></div>
@@ -288,7 +313,6 @@
                     <button onclick="goToView('visit')" class="text-sm text-clinical-500 hover:text-accent-500 mb-4 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a tipos de visita</button>
                     <div class="flex items-center justify-between mb-5">
                         <h1 id="content-header-title" class="text-xl md:text-2xl font-bold text-clinical-900">Protocolo Activo</h1>
-                        <span id="content-duration" class="px-3 py-1 bg-clinical-100 text-clinical-600 rounded-full text-xs font-medium flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> <span id="dur-text"></span></span>
                     </div>
                     <div id="alerts-area" class="space-y-3 mb-6"></div>
                     <div id="checklist-renderer" class="space-y-6"></div>
@@ -306,6 +330,7 @@
         </div>
         <div class="flex-1 overflow-y-auto p-6" id="calc-body"></div>
         <div class="p-4 border-t border-clinical-200 bg-clinical-50">
+            <button id="calc-clear-btn" onclick="clearCurrentCalculator()" class="mb-3 w-full py-2.5 border border-clinical-300 text-clinical-700 rounded-lg font-medium hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">Limpiar test</button>
             <button onclick="performCalculation()" class="w-full py-3 bg-clinical-900 text-white rounded-lg font-medium hover:bg-clinical-800 transition-all flex items-center justify-center gap-2">Calcular y Guardar <i data-lucide="check" class="w-4 h-4"></i></button>
             <div id="calc-result-display" class="mt-3 hidden p-4 rounded-lg text-center font-bold text-lg border"></div>
         </div>
@@ -325,6 +350,16 @@
             <button onclick="showSpecialTab('car')" id="stab-car" class="special-tab px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i>Cardiovascular</button>
         </div>
         <div id="special-content" class="flex-1 overflow-y-auto p-6 text-sm leading-relaxed text-clinical-700"></div>
+    </div>
+
+    <!-- DRUG SHEETS PANEL -->
+    <div id="drug-ficha-backdrop" class="fixed inset-0 bg-clinical-900/20 backdrop-blur-sm z-40 hidden transition-opacity" onclick="closeDrugFichaPanel()"></div>
+    <div id="drug-ficha-panel" class="fixed top-0 right-0 h-full w-full md:w-[760px] bg-white shadow-2xl transform translate-x-full slide-over z-50 flex flex-col">
+        <div class="p-4 border-b border-blue-200 flex items-center justify-between bg-blue-50">
+            <h3 id="drug-ficha-title" class="font-bold text-lg text-blue-900 flex items-center gap-2"><i data-lucide="book-open-text" class="text-blue-700"></i>Fichas técnicas</h3>
+            <button onclick="closeDrugFichaPanel()" class="p-2 text-blue-400 hover:text-blue-700 rounded-full hover:bg-blue-200"><i data-lucide="x"></i></button>
+        </div>
+        <div id="drug-ficha-content" class="flex-1 overflow-y-auto p-6 text-sm leading-relaxed text-clinical-700"></div>
     </div>
 
     <!-- MODAL -->
@@ -350,7 +385,24 @@
 
     <!-- LOGIC -->
     <script>
-        let currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+        function createEmptyPatient() {
+            return {
+                id: '',
+                name: '',
+                pathology: null,
+                pathologyName: '',
+                visitType: null,
+                visitName: '',
+                eva: null,
+                scores: {},
+                checklist: {},
+                alerts: [],
+                calcAnswers: {},
+                details: {}
+            };
+        }
+
+        let currentPatient = createEmptyPatient();
         let sessionSettings = { nurse: '', hospital: '' }; // Datos de sesión
         
         const pathologyData = {
@@ -358,6 +410,7 @@
             'APs': { name: 'Artritis Psoriásica', icon: 'layers' },
             'AR': { name: 'Artritis Reumatoide', icon: 'network' },
             'LES': { name: 'Lupus Eritematoso', icon: 'sparkles' },
+            'SS': { name: 'Síndrome de Sjögren', icon: 'droplets' },
             'VAC': { name: 'Vacunación', icon: 'shield-check' }
         };
         const visitData = {
@@ -368,6 +421,111 @@
             'brote': 'Atención de Brote',
             'vacunacion': 'Control Vacunal'
         };
+        const enthesisSites = {
+            EA: [
+                '1.ª unión costocondral derecha',
+                '1.ª unión costocondral izquierda',
+                '7.ª unión costocondral derecha',
+                '7.ª unión costocondral izquierda',
+                'Espina ilíaca anterosuperior derecha',
+                'Espina ilíaca anterosuperior izquierda',
+                'Cresta ilíaca derecha',
+                'Cresta ilíaca izquierda',
+                'Espina ilíaca posterosuperior derecha',
+                'Espina ilíaca posterosuperior izquierda',
+                'Apófisis espinosa de L5',
+                'Inserción aquílea derecha',
+                'Inserción aquílea izquierda'
+            ],
+            APs: [
+                'Epicóndilo lateral derecho',
+                'Epicóndilo lateral izquierdo',
+                'Cóndilo femoral medial derecho',
+                'Cóndilo femoral medial izquierdo',
+                'Inserción aquílea derecha',
+                'Inserción aquílea izquierda'
+            ]
+        };
+        const dactylitisDigits = [
+            'Mano derecha 1', 'Mano derecha 2', 'Mano derecha 3', 'Mano derecha 4', 'Mano derecha 5',
+            'Mano izquierda 1', 'Mano izquierda 2', 'Mano izquierda 3', 'Mano izquierda 4', 'Mano izquierda 5',
+            'Pie derecho 1', 'Pie derecho 2', 'Pie derecho 3', 'Pie derecho 4', 'Pie derecho 5',
+            'Pie izquierdo 1', 'Pie izquierdo 2', 'Pie izquierdo 3', 'Pie izquierdo 4', 'Pie izquierdo 5'
+        ];
+        const drugSheetCatalog = {
+            adalimumab: { label: 'Adalimumab', product: 'Amgevita', url: 'https://cima.aemps.es/cima/dochtml/ft/1161164010/FT_1161164010.html' },
+            certolizumab: { label: 'Certolizumab pegol', product: 'Cimzia', url: 'https://cima.aemps.es/cima/dochtml/ft/109544001/FT_109544001.html' },
+            etanercept: { label: 'Etanercept', product: 'Benepali', url: 'https://cima.aemps.es/cima/dochtml/ft/1151074001/FT_1151074001.html' },
+            golimumab: { label: 'Golimumab', product: 'Simponi', url: 'https://cima.aemps.es/cima/dochtml/ft/09546001/FT_09546001.html' },
+            infliximab: { label: 'Infliximab', product: 'Remicade', url: 'https://cima.aemps.es/cima/dochtml/ft/99116001/FT_99116001.html' },
+            secukinumab: { label: 'Secukinumab', product: 'Cosentyx', url: 'https://cima.aemps.es/cima/dochtml/ft/114980003/FT_114980003.html' },
+            ixekizumab: { label: 'Ixekizumab', product: 'Taltz', url: 'https://cima.aemps.es/cima/dochtml/ft/1151085004/FT_1151085004.html' },
+            ustekinumab: { label: 'Ustekinumab', product: 'Pyzchiva', url: 'https://cima.aemps.es/cima/dochtml/ft/1241801003/FT_1241801003.html' },
+            abatacept: { label: 'Abatacept', product: 'Orencia', url: 'https://cima.aemps.es/cima/dochtml/ft/07389008/FT_07389008.html' },
+            rituximab: { label: 'Rituximab', product: 'MabThera', url: 'https://cima.aemps.es/cima/dochtml/ft/98067001/FT_98067001.html' },
+            tocilizumab: { label: 'Tocilizumab', product: 'Avtozma', url: 'https://cima.aemps.es/cima/dochtml/ft/1241896007/FT_1241896007.html' },
+            sarilumab: { label: 'Sarilumab', product: 'Kevzara', url: 'https://cima.aemps.es/cima/dochtml/ft/1171196005/FT_1171196005.html' },
+            tofacitinib: { label: 'Tofacitinib', product: 'Xeljanz', url: 'https://cima.aemps.es/cima/dochtml/ft/1171178007/FT_1171178007.html' },
+            baricitinib: { label: 'Baricitinib', product: 'Olumiant', url: 'https://cima.aemps.es/cima/dochtml/ft/1161170002/FT_1161170002.html' },
+            upadacitinib: { label: 'Upadacitinib', product: 'Rinvoq', url: 'https://cima.aemps.es/cima/dochtml/ft/1191404001/FT_1191404001.html' },
+            apremilast: { label: 'Apremilast', product: 'Otezla', url: 'https://cima.aemps.es/cima/dochtml/ft/114981001/FT_114981001.html' },
+            metotrexato: { label: 'Metotrexato', product: 'Imeth', url: 'https://cima.aemps.es/cima/dochtml/ft/79580/FT_79580.html' },
+            leflunomida: { label: 'Leflunomida', product: 'Leflunomida Cinfa', url: 'https://cima.aemps.es/cima/dochtml/ft/80684/FT_80684.html' },
+            sulfasalazina: { label: 'Sulfasalazina', product: 'Salazopyrina', url: 'https://cima.aemps.es/cima/dochtml/ft/39681/FT_39681.html' },
+            hidroxicloroquina: { label: 'Hidroxicloroquina', product: 'Duplaxil', url: 'https://cima.aemps.es/cima/dochtml/ft/84048/FT_84048.html' },
+            azatioprina: { label: 'Azatioprina', product: 'Immufalk', url: 'https://cima.aemps.es/cima/dochtml/ft/78164/FT_78164.html' },
+            belimumab: { label: 'Belimumab', product: 'Benlysta', url: 'https://cima.aemps.es/cima/dochtml/ft/11700001/FT_11700001.html' },
+            anifrolumab: { label: 'Anifrolumab', product: 'Saphnelo', url: 'https://cima.aemps.es/cima/dochtml/ft/1211623001/FT_1211623001.html' },
+            voclosporina: { label: 'Voclosporina', product: 'Lupkynis', url: 'https://cima.aemps.es/cima/dochtml/ft/1221678001/FT_1221678001.html' }
+        };
+        const pathologyDrugSheets = {
+            EA: ['adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'secukinumab', 'ixekizumab', 'upadacitinib'],
+            APs: ['adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'secukinumab', 'ixekizumab', 'ustekinumab', 'apremilast', 'tofacitinib', 'upadacitinib'],
+            AR: ['metotrexato', 'leflunomida', 'sulfasalazina', 'hidroxicloroquina', 'adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'abatacept', 'rituximab', 'tocilizumab', 'sarilumab', 'tofacitinib', 'baricitinib', 'upadacitinib'],
+            LES: ['hidroxicloroquina', 'azatioprina', 'belimumab', 'anifrolumab', 'voclosporina'],
+            SS: []
+        };
+        const pregnancyGuideRows = [
+            ['AINEs', 'Uso puntual; evitar uso mantenido desde semana 20 y suspender antes de semana 28', 'Generalmente compatibles', 'No aplica preconcepción', 'Preferir vida media corta y revisión obstétrica.'],
+            ['COX-2 (celecoxib)', 'Evitar salvo necesidad muy justificada', 'Compatible', 'No aplica preconcepción', 'Datos más limitados que con AINEs no selectivos.'],
+            ['Prednisona / prednisolona', 'Permitidas si son necesarias', 'Compatibles', 'No precisa', 'Intentar dosis de mantenimiento ≤ 5 mg/día si el control lo permite.'],
+            ['Metotrexato', 'Contraindicado', 'Contraindicado', 'Suspender al menos 3 meses antes', 'Teratógeno.'],
+            ['Leflunomida', 'Contraindicada', 'Contraindicada', 'Lavado con colestiramina al menos 11 días', 'Confirmar niveles según protocolo si procede.'],
+            ['Sulfasalazina', 'Permitida', 'Permitida', 'No precisa', 'Añadir ácido fólico 2-5 mg/día.'],
+            ['Hidroxicloroquina', 'Segura / recomendada', 'Segura', 'No precisa', 'Especialmente importante en LES.'],
+            ['Azatioprina', 'Permitida', 'Permitida', 'No precisa', 'Habitualmente hasta 2 mg/kg/día.'],
+            ['Ciclosporina / tacrolimus', 'Posibles con precaución', 'Posibles con vigilancia', 'No precisa', 'Monitorizar función renal y niveles si procede.'],
+            ['Micofenolato', 'Contraindicado', 'Evitar', 'Suspender al menos 6 semanas antes', 'Teratógeno.'],
+            ['Ciclofosfamida', 'Contraindicada', 'Contraindicada', 'Suspender antes de la concepción', 'Sólo escenarios excepcionales y bajo especialistas.'],
+            ['Anti-TNF', 'Compatibles; certolizumab con menor transferencia placentaria', 'Compatibles', 'No requieren cese sistemático previo', 'Individualizar la última dosis en 3T según control y plan vacunal neonatal.'],
+            ['Tocilizumab / sarilumab', 'Evitar salvo necesidad muy justificada', 'Compatible con vigilancia', 'Suspender 3 meses antes si se planifica embarazo', 'Decisión individualizada.'],
+            ['Rituximab', 'Evitar salvo necesidad muy justificada', 'Compatible con vigilancia', 'Suspender al menos 6 meses antes', 'Puede individualizarse si el control materno lo exige.'],
+            ['Abatacept', 'Evitar', 'Compatible con vigilancia', 'Suspender al menos 10 semanas antes', 'Pocos datos en embarazo.'],
+            ['Secukinumab / ixekizumab', 'Evitar', 'Compatible con vigilancia', 'Suspender 3 meses antes', 'Pocos datos en embarazo.'],
+            ['Ustekinumab', 'Evitar salvo valoración especializada', 'Compatible con vigilancia', 'Suspender al menos 15 semanas antes', 'Pocos datos en embarazo.'],
+            ['JAKi (tofacitinib, baricitinib, upadacitinib)', 'Contraindicados', 'Evitar', 'Suspender al menos 1 mes antes', 'No recomendados en gestación.']
+        ];
+        const surgeryGuideRows = [
+            ['Metotrexato', 'Continuar', 'No demorar por este fármaco', 'Continuar', 'Basado en ACR/AAHKS 2022 para cirugía electiva.'],
+            ['Leflunomida', 'Continuar', 'No demorar por este fármaco', 'Continuar', 'Mantener salvo contraindicación individual.'],
+            ['Hidroxicloroquina', 'Continuar', 'No demorar por este fármaco', 'Continuar', 'Mantener.'],
+            ['Sulfasalazina', 'Continuar', 'No demorar por este fármaco', 'Continuar', 'Mantener.'],
+            ['Adalimumab', 'Suspender 1 ciclo', 'Programar en semana 3 tras la última dosis', 'Reiniciar cuando la herida esté bien y sin infección (habitualmente ~14 días)', 'Cirugía mayor electiva.'],
+            ['Etanercept', 'Suspender 1 ciclo', 'Programar en semana 2', 'Reinicio tras cicatrización adecuada', ''],
+            ['Infliximab', 'Suspender 1 ciclo', 'Programar en semana 5, 7 o 9 según pauta IV', 'Reinicio tras cicatrización adecuada', ''],
+            ['Golimumab', 'Suspender 1 ciclo', 'Programar en semana 5 (SC) o 9 (IV)', 'Reinicio tras cicatrización adecuada', ''],
+            ['Certolizumab', 'Suspender 1 ciclo', 'Programar en semana 3 o 5 según pauta', 'Reinicio tras cicatrización adecuada', ''],
+            ['Abatacept', 'Suspender 1 ciclo', 'Programar en semana 2 (SC) o 5 (IV)', 'Reinicio tras cicatrización adecuada', ''],
+            ['Rituximab', 'Suspender y programar al final del ciclo', 'Programar en mes 7', 'Reinicio tras cicatrización adecuada', 'Puede individualizarse en enfermedad grave.'],
+            ['Tocilizumab', 'Suspender 1 ciclo', 'Programar en semana 2 (SC semanal) o 5 (IV mensual)', 'Reinicio tras cicatrización adecuada', ''],
+            ['Sarilumab', 'Suspender 1 ciclo', 'Programar a partir de semana 3', 'Reinicio tras cicatrización adecuada', 'Aplicación práctica: 1 intervalo completo.'],
+            ['Secukinumab', 'Suspender 1 ciclo', 'Programar en semana 5', 'Reinicio tras cicatrización adecuada', ''],
+            ['Ixekizumab', 'Suspender 1 ciclo', 'Programar en semana 5', 'Reinicio tras cicatrización adecuada', ''],
+            ['Ustekinumab', 'Suspender 1 ciclo', 'Programar en semana 13', 'Reinicio tras cicatrización adecuada', ''],
+            ['Belimumab', 'Individualizar', 'Si IV mensual, programar en semana 5', 'Reinicio tras cicatrización adecuada', 'En LES grave puede mantenerse según protocolo.'],
+            ['Anifrolumab', 'Suspender 1 ciclo', 'Programar en semana 5', 'Reinicio tras cicatrización adecuada', 'Aplicación práctica: 1 intervalo completo.'],
+            ['JAKi (tofacitinib, baricitinib, upadacitinib)', 'Suspender 3 días antes', 'Operar el día 4', 'Reiniciar cuando la herida esté bien y sin infección (habitualmente ~14 días)', 'ACR/AAHKS 2022.']
+        ];
 
         // --- CORE FUNCTIONS ---
         document.addEventListener('DOMContentLoaded', () => { 
@@ -378,10 +536,16 @@
                 if (e.key !== 'Escape') return;
                 const calcOpen = !document.getElementById('calculator-panel').classList.contains('translate-x-full');
                 const specialOpen = !document.getElementById('special-situations-panel').classList.contains('translate-x-full');
+                const drugSheetOpen = !document.getElementById('drug-ficha-panel').classList.contains('translate-x-full');
                 const modalOpen = !document.getElementById('confirmation-modal').classList.contains('hidden');
                 if (modalOpen) closeModal();
                 else if (calcOpen) closeCalculator();
                 else if (specialOpen) closeSpecialSituations();
+                else if (drugSheetOpen) closeDrugFichaPanel();
+            });
+            document.addEventListener('click', (e) => {
+                const searchBox = document.getElementById('quick-search-box');
+                if (searchBox && !searchBox.contains(e.target)) clearQuickSearch();
             });
         });
 
@@ -398,7 +562,7 @@
                 document.getElementById('welcome-hospital').value = sessionSettings.hospital;
             }
             // Asegurar que siempre inicie en página de inicio
-            currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+            currentPatient = createEmptyPatient();
             goToView('pathology');
         }
 
@@ -433,7 +597,54 @@
         }
 
         // --- APP NAVIGATION ---
+        function resetInteractivePanels() {
+            const calcPanel = document.getElementById('calculator-panel');
+            const specialPanel = document.getElementById('special-situations-panel');
+            const drugSheetPanel = document.getElementById('drug-ficha-panel');
+            const backdrop = document.getElementById('slide-over-backdrop');
+            const drugSheetBackdrop = document.getElementById('drug-ficha-backdrop');
+            const calcBody = document.getElementById('calc-body');
+            const resultDisplay = document.getElementById('calc-result-display');
+
+            if (calcPanel) calcPanel.classList.add('translate-x-full');
+            if (specialPanel) specialPanel.classList.add('translate-x-full');
+            if (drugSheetPanel) drugSheetPanel.classList.add('translate-x-full');
+            if (backdrop) backdrop.classList.add('hidden');
+            if (drugSheetBackdrop) drugSheetBackdrop.classList.add('hidden');
+            if (calcBody) calcBody.innerHTML = '';
+            if (resultDisplay) {
+                resultDisplay.textContent = '';
+                resultDisplay.className = 'mt-3 hidden p-4 rounded-lg text-center font-bold text-lg border';
+            }
+            currentCalcType = null;
+        }
+
+        function clearRenderedPatientState() {
+            const alertsArea = document.getElementById('alerts-area');
+            const checklistRenderer = document.getElementById('checklist-renderer');
+            const title = document.getElementById('content-header-title');
+
+            if (alertsArea) alertsArea.innerHTML = '';
+            if (checklistRenderer) checklistRenderer.innerHTML = '';
+            if (title) title.textContent = 'Protocolo Activo';
+        }
+
+        function resetPatientClinicalState(preserveIdentity = false) {
+            const previousId = currentPatient.id;
+            const previousName = currentPatient.name;
+            currentPatient = createEmptyPatient();
+            if (preserveIdentity) {
+                currentPatient.id = previousId;
+                currentPatient.name = previousName;
+            }
+            resetInteractivePanels();
+            clearRenderedPatientState();
+            clearQuickSearch();
+        }
+
         function selectPathology(code) {
+            const preserveIdentity = !currentPatient.pathology && !currentPatient.visitType;
+            resetPatientClinicalState(preserveIdentity);
             currentPatient.pathology = code;
             currentPatient.pathologyName = pathologyData[code].name;
             // NO auto-save - manual save only
@@ -445,6 +656,7 @@
                 goToView('content');
                 enableSideActions(true);
             } else {
+                enableSideActions(false);
                 goToView('visit');
             }
             updateSidebarContext();
@@ -453,7 +665,12 @@
         function selectVisitType(type) {
             currentPatient.visitType = type;
             currentPatient.visitName = visitData[type];
-            currentPatient.scores = {}; currentPatient.alerts = [];
+            currentPatient.eva = null;
+            currentPatient.scores = {};
+            currentPatient.checklist = {};
+            currentPatient.alerts = [];
+            currentPatient.calcAnswers = {};
+            currentPatient.details = {};
             // NO auto-save - manual save only
             loadChecklistContent();
             goToView('content');
@@ -479,8 +696,8 @@
             
             const idInput = document.getElementById('patient-id-input');
             const nameInput = document.getElementById('patient-name-input');
-            if(idInput && currentPatient.id) idInput.value = currentPatient.id;
-            if(nameInput && currentPatient.name) nameInput.value = currentPatient.name;
+            if(idInput) idInput.value = currentPatient.id || '';
+            if(nameInput) nameInput.value = currentPatient.name || '';
         }
 
         function enableSideActions(enable) {
@@ -495,7 +712,8 @@
                 'EA': 'Importancia del ejercicio diario, mantener buena postura, evitar sedentarismo',
                 'APs': 'Cuidado de piel y articulaciones, control del peso, manejo del estrés',
                 'AR': 'Protección articular, ejercicios de movilidad, adaptación actividades diarias',
-                'LES': 'Fotoprotección estricta, prevención infecciones, manejo fatiga'
+                'LES': 'Fotoprotección estricta, prevención infecciones, manejo fatiga',
+                'SS': 'Higiene oral y ocular, hidratación frecuente, conservar energía y detectar síntomas sistémicos'
             };
             return advice[currentPatient.pathology] || 'Adaptaciones específicas según patología';
         }
@@ -505,7 +723,8 @@
                 'EA': 'Evitar traumatismos, mantener actividad física',
                 'APs': 'Control peso, cuidado piel, evitar traumatismos',
                 'AR': 'Anticoncepción si MTX, evitar infecciones',
-                'LES': 'Fotoprotección, anticoncepción, evitar infecciones'
+                'LES': 'Fotoprotección, anticoncepción, evitar infecciones',
+                'SS': 'Evitar fármacos que aumenten sequedad, vigilar caries, queratitis y embarazo con anti-Ro/SSA'
             };
             return precautions[currentPatient.pathology] || 'Según medicación prescrita';
         }
@@ -515,31 +734,322 @@
                 'EA': 'Dolor torácico, uveítis, síntomas neurológicos',
                 'APs': 'Articulación caliente+fiebre, dactilitis severa, eritrodermia',
                 'AR': 'Fiebre+artritis, deformidad aguda, síntomas sistémicos',
-                'LES': 'Convulsiones, confusión, disnea, edemas, hematuria'
+                'LES': 'Convulsiones, confusión, disnea, edemas, hematuria',
+                'SS': 'Parotidomegalia persistente, púrpura, adenopatías, neuropatía, proteinuria o fiebre sin foco'
             };
             return signs[currentPatient.pathology] || 'Signos específicos de gravedad';
+        }
+
+        let currentQuickSearchResults = [];
+        let quickSearchHighlightIndex = -1;
+
+        function normalizeSearchText(text) {
+            return (text || '')
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
+        function getQuickSearchEntries() {
+            const entries = [];
+            const availablePathologyCodes = currentPatient.pathology ? [currentPatient.pathology] : Object.keys(pathologyData);
+            const pathologyAliases = {
+                EA: ['espa', 'espondiloartritis', 'axial', 'sacroiliacas', 'ankilosing', 'espondilitis'],
+                APs: ['aps', 'psoriasica', 'psoriatica', 'psoriasis'],
+                AR: ['ar', 'reumatoide'],
+                LES: ['lupus', 'les', 'lupico'],
+                SS: ['sjogren', 'sequedad', 'xeroftalmia', 'xerostomia'],
+                VAC: ['vacunas', 'vacunacion', 'vacunal', 'inmunizacion']
+            };
+            availablePathologyCodes.forEach(code => {
+                entries.push({
+                    title: pathologyData[code].name,
+                    subtitle: 'Patología',
+                    keywords: [code, pathologyData[code].name].concat(pathologyAliases[code] || []),
+                    action: { kind: 'pathology', pathology: code }
+                });
+            });
+
+            const visitAliases = {
+                inicio: ['inicio enfermedad', 'primera visita', 'debut', 'diagnostico'],
+                educacion: ['educacion terapeutica', 'farmaco', 'tratamiento', 'enseñanza'],
+                postinicio: ['telefonico', '6 semanas', 'post inicio', 'seguimiento telefonico'],
+                seguimiento: ['revision', 'control', 'seguimiento regular'],
+                brote: ['flare', 'urgente', 'empeoramiento'],
+                vacunacion: ['vacunas', 'vacunal']
+            };
+            availablePathologyCodes.forEach(code => {
+                const visitTypes = code === 'VAC' ? ['vacunacion'] : ['inicio', 'educacion', 'postinicio', 'seguimiento', 'brote'];
+                visitTypes.forEach(type => {
+                    entries.push({
+                        title: `${visitData[type]} - ${pathologyData[code].name}`,
+                        subtitle: 'Tipo de visita',
+                        keywords: [visitData[type], pathologyData[code].name].concat(visitAliases[type] || []),
+                        action: { kind: 'visit', pathology: code, visit: type }
+                    });
+                });
+            });
+
+            const calculatorEntries = [
+                { type: 'basdai', title: 'BASDAI', pathology: 'EA', visits: ['inicio', 'postinicio', 'seguimiento', 'brote'], keywords: ['actividad axial', 'rigidez', 'espa'] },
+                { type: 'asdas', title: 'ASDAS', pathology: 'EA', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['actividad axial', 'pcr', 'vsg'] },
+                { type: 'basfi', title: 'BASFI', pathology: 'EA', visits: ['inicio', 'postinicio', 'seguimiento'], keywords: ['funcion axial', 'capacidad funcional'] },
+                { type: 'asashi', title: 'ASAS Health Index', pathology: 'EA', visits: ['inicio', 'seguimiento'], keywords: ['asas hi', 'calidad de vida axial'] },
+                { type: 'entesis', title: 'Registro de entesitis', pathology: 'EA', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['entesis', 'entesitis', 'mases'] },
+                { type: 'dactilitis', title: 'Registro de dactilitis', pathology: 'EA', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['dedos', 'dactilitis'] },
+                { type: 'dapsa', title: 'DAPSA', pathology: 'APs', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['actividad psoriasica', 'artritis psoriasica'] },
+                { type: 'psaid', title: 'PSAID', pathology: 'APs', visits: ['inicio', 'postinicio', 'seguimiento', 'brote'], keywords: ['impacto psoriasica', 'calidad de vida aps'] },
+                { type: 'haq', title: 'HAQ-DI', pathology: 'APs', visits: ['inicio', 'seguimiento'], keywords: ['haq', 'discapacidad funcional'] },
+                { type: 'rapid3', title: 'RAPID3', pathology: 'APs', visits: ['postinicio'], keywords: ['rapid', 'carga sintomatica'] },
+                { type: 'entesis', title: 'Registro de entesitis', pathology: 'APs', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['entesis', 'entesitis', 'lei'] },
+                { type: 'dactilitis', title: 'Registro de dactilitis', pathology: 'APs', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['dedos', 'dactilitis'] },
+                { type: 'das28', title: 'DAS28', pathology: 'AR', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['actividad articular', 'recuento articular'] },
+                { type: 'rapid3', title: 'RAPID3', pathology: 'AR', visits: ['inicio', 'postinicio', 'seguimiento', 'brote'], keywords: ['rapid', 'carga sintomatica'] },
+                { type: 'haq', title: 'HAQ-DI', pathology: 'AR', visits: ['inicio', 'seguimiento'], keywords: ['haq', 'discapacidad funcional'] },
+                { type: 'morisky', title: 'Morisky-Green', pathology: 'AR', visits: ['postinicio', 'seguimiento'], keywords: ['adherencia', 'cumplimiento'] },
+                { type: 'sledai', title: 'SLEDAI-2K', pathology: 'LES', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['actividad lupica', 'lupus'] },
+                { type: 'sdi', title: 'SLICC/SDI', pathology: 'LES', visits: ['inicio', 'seguimiento'], keywords: ['daño lupico', 'danio acumulado'] },
+                { type: 'morisky', title: 'Morisky-Green', pathology: 'LES', visits: ['postinicio', 'seguimiento'], keywords: ['adherencia', 'cumplimiento'] },
+                { type: 'mars', title: 'MARS-5', pathology: 'LES', visits: ['postinicio', 'seguimiento'], keywords: ['adherencia', 'cumplimiento'] },
+                { type: 'esspri', title: 'ESSPRI', pathology: 'SS', visits: ['inicio', 'postinicio', 'seguimiento', 'brote'], keywords: ['sjogren', 'fatiga', 'sequedad', 'dolor'] },
+                { type: 'essdai', title: 'ESSDAI', pathology: 'SS', visits: ['inicio', 'seguimiento', 'brote'], keywords: ['sjogren', 'actividad sistemica'] },
+                { type: 'sicca', title: 'EVA de sequedad', pathology: 'SS', visits: ['inicio', 'postinicio', 'seguimiento', 'brote'], keywords: ['sicca', 'sequedad oral', 'sequedad ocular'] }
+            ];
+            calculatorEntries.filter(entry => !currentPatient.pathology || entry.pathology === currentPatient.pathology).forEach(entry => {
+                entry.visits.forEach(visitType => {
+                    entries.push({
+                        title: `${entry.title} - ${pathologyData[entry.pathology].name} - ${visitData[visitType]}`,
+                        subtitle: 'Índice / calculadora',
+                        keywords: [entry.title, pathologyData[entry.pathology].name, visitData[visitType]].concat(entry.keywords || []),
+                        action: { kind: 'calculator', pathology: entry.pathology, visit: visitType, calcType: entry.type }
+                    });
+                });
+            });
+
+            const specialEntries = [
+                { tab: 'inf', title: 'Situaciones especiales - Infecciones', keywords: ['fiebre', 'infeccion', 'biologico', 'tuberculosis'] },
+                { tab: 'emb', title: 'Situaciones especiales - Embarazo', keywords: ['gestacion', 'lactancia', 'preconcepcion', 'fertil'] },
+                { tab: 'cir', title: 'Situaciones especiales - Cirugía', keywords: ['quirurgica', 'perioperatorio', 'intervencion', 'operacion'] },
+                { tab: 'car', title: 'Situaciones especiales - Riesgo cardiovascular', keywords: ['cardio', 'riesgo cv', 'hipertension', 'lipidos'] }
+            ];
+            specialEntries.forEach(entry => {
+                entries.push({
+                    title: entry.title,
+                    subtitle: 'Situación especial',
+                    keywords: entry.keywords,
+                    action: { kind: 'special', tab: entry.tab }
+                });
+            });
+
+            if (currentPatient.pathology && pathologyDrugSheets[currentPatient.pathology]) {
+                entries.push({
+                    title: `Fichas técnicas - ${pathologyData[currentPatient.pathology].name}`,
+                    subtitle: 'Panel lateral',
+                    keywords: ['ficha tecnica', 'cima', 'aemps', 'medicacion', 'farmaco', pathologyData[currentPatient.pathology].name],
+                    action: { kind: 'drugSheets', pathology: currentPatient.pathology }
+                });
+
+                pathologyDrugSheets[currentPatient.pathology].forEach(key => {
+                    const drug = drugSheetCatalog[key];
+                    if (!drug) return;
+                    entries.push({
+                        title: `Ficha técnica - ${drug.label}`,
+                        subtitle: `CIMA / ${pathologyData[currentPatient.pathology].name}`,
+                        keywords: [drug.label, drug.product, 'ficha tecnica', 'cima'],
+                        action: { kind: 'drugSheets', pathology: currentPatient.pathology, focusKey: key }
+                    });
+                });
+
+                const sectionEntries = [
+                    { title: 'Información sobre el Fármaco Prescrito', keywords: ['farmaco prescrito', 'prescrito', 'medicacion'] },
+                    { title: 'Administración del Tratamiento', keywords: ['administracion', 'inyeccion', 'tecnica'] },
+                    { title: 'Efectos Adversos y Precauciones', keywords: ['efectos adversos', 'precauciones', 'seguridad'] },
+                    { title: 'Información Específica por Fármaco', keywords: ['fichas', 'clases farmacos', 'biologico', 'jak'] },
+                    { title: `Educación Específica: ${currentPatient.pathologyName || ''}`, keywords: ['educacion especifica', 'autocuidado'] },
+                    { title: 'Expectativas y Adherencia', keywords: ['adherencia', 'expectativas', 'olvido'] }
+                ];
+                sectionEntries.forEach(section => {
+                    entries.push({
+                        title: section.title,
+                        subtitle: `Sección - ${pathologyData[currentPatient.pathology].name}`,
+                        keywords: section.keywords,
+                        action: { kind: 'section', pathology: currentPatient.pathology, visit: 'educacion', sectionTitle: section.title }
+                    });
+                });
+            }
+
+            return entries;
+        }
+
+        function scoreQuickSearchEntry(entry, normalizedQuery) {
+            if (!normalizedQuery) return 0;
+            const haystack = normalizeSearchText([entry.title, entry.subtitle].concat(entry.keywords || []).join(' '));
+            const titleText = normalizeSearchText(entry.title);
+            const queryTokens = normalizedQuery.split(' ').filter(Boolean);
+            const matchedTokens = queryTokens.filter(token => haystack.includes(token));
+
+            if (!matchedTokens.length) return 0;
+
+            let score = matchedTokens.length * 15;
+            if (matchedTokens.length === queryTokens.length) score += 35;
+            if (haystack.includes(normalizedQuery)) score += 50;
+            if (titleText.includes(normalizedQuery)) score += 20;
+            if (titleText.startsWith(normalizedQuery)) score += 15;
+
+            return score;
+        }
+
+        function renderQuickSearchResults(query, preserveHighlight = false) {
+            const resultsContainer = document.getElementById('quick-search-results');
+            const clearBtn = document.getElementById('quick-search-clear');
+            const normalizedQuery = normalizeSearchText(query);
+
+            if (clearBtn) clearBtn.classList.toggle('hidden', !query);
+            if (!resultsContainer) return;
+
+            if (!normalizedQuery) {
+                currentQuickSearchResults = [];
+                quickSearchHighlightIndex = -1;
+                resultsContainer.classList.add('hidden');
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            const results = getQuickSearchEntries()
+                .map(entry => ({ entry, score: scoreQuickSearchEntry(entry, normalizedQuery) }))
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title, 'es'))
+                .slice(0, 8)
+                .map(item => item.entry);
+
+            currentQuickSearchResults = results;
+            if (!preserveHighlight) quickSearchHighlightIndex = results.length ? 0 : -1;
+            else quickSearchHighlightIndex = Math.min(Math.max(quickSearchHighlightIndex, 0), Math.max(results.length - 1, 0));
+
+            if (!results.length) {
+                resultsContainer.innerHTML = `
+                    <div class="p-4 text-sm text-clinical-500">
+                        Sin resultados. Prueba con términos como <span class="font-medium text-clinical-700">embarazo</span>, <span class="font-medium text-clinical-700">DAS28</span> o <span class="font-medium text-clinical-700">ficha técnica</span>.
+                    </div>
+                `;
+                resultsContainer.classList.remove('hidden');
+                return;
+            }
+
+            resultsContainer.innerHTML = results.map((result, index) => `
+                <button
+                    onclick="executeQuickSearchResult(${index})"
+                    class="w-full border-b border-clinical-100 px-4 py-3 text-left hover:bg-clinical-50 ${index === quickSearchHighlightIndex ? 'bg-clinical-50' : ''}"
+                >
+                    <div class="text-sm font-semibold text-clinical-900">${result.title}</div>
+                    <div class="text-xs text-clinical-500 mt-1">${result.subtitle}</div>
+                </button>
+            `).join('');
+            resultsContainer.classList.remove('hidden');
+        }
+
+        function updateQuickSearch(query) {
+            renderQuickSearchResults(query);
+        }
+
+        function clearQuickSearch(keepFocus = false) {
+            const input = document.getElementById('quick-search-input');
+            if (input) input.value = '';
+            renderQuickSearchResults('');
+            if (keepFocus && input) input.focus();
+        }
+
+        function handleQuickSearchKeydown(event) {
+            if (!currentQuickSearchResults.length) return;
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                quickSearchHighlightIndex = (quickSearchHighlightIndex + 1) % currentQuickSearchResults.length;
+                renderQuickSearchResults(event.target.value, true);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                quickSearchHighlightIndex = (quickSearchHighlightIndex - 1 + currentQuickSearchResults.length) % currentQuickSearchResults.length;
+                renderQuickSearchResults(event.target.value, true);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                const selectedIndex = quickSearchHighlightIndex >= 0 ? quickSearchHighlightIndex : 0;
+                executeQuickSearchResult(selectedIndex);
+            } else if (event.key === 'Escape') {
+                clearQuickSearch();
+            }
+        }
+
+        function scrollToChecklistSection(sectionTitle) {
+            const normalizedTitle = normalizeSearchText(sectionTitle);
+            const headings = Array.from(document.querySelectorAll('#checklist-renderer h3'));
+            const match = headings.find(heading => normalizeSearchText(heading.textContent).includes(normalizedTitle));
+            const card = match?.closest('.bg-white');
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function scrollToDrugSheetCard(focusKey) {
+            const target = document.querySelector(`[data-drug-sheet="${focusKey}"]`);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function executeQuickSearchAction(action) {
+            if (!action) return;
+
+            if (action.kind === 'pathology') {
+                selectPathology(action.pathology);
+            } else if (action.kind === 'visit') {
+                selectPathology(action.pathology);
+                selectVisitType(action.visit);
+            } else if (action.kind === 'calculator') {
+                selectPathology(action.pathology);
+                selectVisitType(action.visit);
+                openCalculator(action.calcType);
+            } else if (action.kind === 'special') {
+                openSpecialSituations();
+                showSpecialTab(action.tab);
+            } else if (action.kind === 'drugSheets') {
+                if (action.pathology) {
+                    selectPathology(action.pathology);
+                    if (action.pathology !== 'VAC') selectVisitType('educacion');
+                }
+                openDrugFichaPanel();
+                if (action.focusKey) setTimeout(() => scrollToDrugSheetCard(action.focusKey), 80);
+            } else if (action.kind === 'section') {
+                selectPathology(action.pathology);
+                selectVisitType(action.visit);
+                setTimeout(() => scrollToChecklistSection(action.sectionTitle), 80);
+            }
+
+            clearQuickSearch();
+        }
+
+        function executeQuickSearchResult(index) {
+            const result = currentQuickSearchResults[index];
+            if (!result) return;
+            executeQuickSearchAction(result.action);
         }
 
         function loadChecklistContent() {
             const container = document.getElementById('checklist-renderer');
             const title = document.getElementById('content-header-title');
-            const dur = document.getElementById('dur-text');
             
             if(!title || !container) return;
             title.textContent = `${pathologyData[currentPatient.pathology].name} - ${(visitData[currentPatient.visitType] || currentPatient.visitName || '')}`;
             
             let html = '';
-            let duration = '30 min';
             
-            if (currentPatient.visitType === 'inicio') { html = getInicioTemplate(); duration = '45 min'; }
-            else if (currentPatient.visitType === 'educacion') { html = getEducacionTemplate(); duration = '30 min'; }
-            else if (currentPatient.visitType === 'postinicio') { html = getPostInicioTemplate(); duration = '20-25 min'; }
-            else if (currentPatient.visitType === 'seguimiento') { html = getSeguimientoTemplate(); duration = '20-30 min'; }
-            else if (currentPatient.visitType === 'brote') { html = getBroteTemplate(); duration = 'Variable'; }
-            else if (currentPatient.visitType === 'vacunacion') { html = getVacunacionTemplate(); duration = '15-20 min'; }
-            
-            dur.textContent = duration;
+            if (currentPatient.visitType === 'inicio') html = getInicioTemplate();
+            else if (currentPatient.visitType === 'educacion') html = getEducacionTemplate();
+            else if (currentPatient.visitType === 'postinicio') html = getPostInicioTemplate();
+            else if (currentPatient.visitType === 'seguimiento') html = getSeguimientoTemplate();
+            else if (currentPatient.visitType === 'brote') html = getBroteTemplate();
+            else if (currentPatient.visitType === 'vacunacion') html = getVacunacionTemplate();
+
             container.innerHTML = html;
+            const alertsArea = document.getElementById('alerts-area');
+            if (alertsArea) alertsArea.innerHTML = '';
             
             // Restore State
             Object.keys(currentPatient.checklist).forEach(id => { const cb = document.getElementById(id); if (cb) cb.checked = currentPatient.checklist[id]; });
@@ -548,6 +1058,7 @@
                 updateIntegerSelect('eva', currentPatient.eva || 0);
             }
             lucide.createIcons();
+            checkAlerts();
         }
 
         // --- COMPONENTS ---
@@ -557,10 +1068,170 @@
         function createCheckbox(id, label) {
             return `<label class="flex items-start gap-3 py-0.5 cursor-pointer group"><div class="relative flex items-center"><input type="checkbox" id="${id}" onchange="toggleCheck('${id}')" class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-clinical-300 shadow-sm transition-all checked:border-accent-500 checked:bg-accent-500 hover:border-accent-400 focus:ring-2 focus:ring-accent-200 focus:ring-offset-1"><i data-lucide="check" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"></i></div><div class="flex-1"><span class="text-sm leading-5 text-clinical-700 group-hover:text-clinical-900 transition-colors">${label}</span></div></label>`;
         }
+        function createToggleGrid(prefix, options, columns = 'grid-cols-2') {
+            return `
+                <div class="grid ${columns} gap-2">
+                    ${options.map((label, index) => `
+                        <label class="cursor-pointer">
+                            <input type="checkbox" id="${prefix}_${index}" class="peer sr-only">
+                            <span class="block rounded-lg border border-clinical-300 bg-white px-3 py-2 text-sm text-clinical-700 transition-all peer-checked:border-accent-500 peer-checked:bg-accent-500 peer-checked:text-white hover:border-accent-400">${label}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        }
+        function renderInfoTable(headers, rows) {
+            return `
+                <div class="overflow-x-auto rounded-xl border border-clinical-200 bg-white">
+                    <table class="min-w-full text-xs md:text-sm border-collapse">
+                        <thead class="bg-clinical-100 text-clinical-800">
+                            <tr>
+                                ${headers.map(header => `<th class="p-2 border border-clinical-200 text-left font-semibold">${header}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map((row, rowIndex) => `
+                                <tr class="${rowIndex % 2 ? 'bg-clinical-50' : 'bg-white'}">
+                                    ${row.map((cell, cellIndex) => `<td class="p-2 border border-clinical-200 align-top ${cellIndex === 0 ? 'font-medium text-clinical-900' : ''}">${cell}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        function getDrugSheetAccessCard() {
+            return `
+                <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h5 class="font-semibold text-blue-900">Consulta de fichas técnicas CIMA</h5>
+                            <p class="text-xs text-blue-800">Abre un panel lateral con los enlaces oficiales en español de los fármacos relacionados con la patología activa.</p>
+                        </div>
+                        <button onclick="openDrugFichaPanel()" class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            Consultar fichas técnicas
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        function getPregnancySpecialContent() {
+            return `
+                <div class="space-y-4">
+                    <div class="p-4 bg-pink-50 border border-pink-200 rounded-lg">
+                        <h3 class="font-bold text-pink-900 mb-2">Planificación gestacional y seguimiento</h3>
+                        <ul class="list-disc ml-4 text-pink-800 space-y-1">
+                            <li>Detectar deseo gestacional y coordinar preconcepción con Reumatología y Obstetricia.</li>
+                            <li>Buscar remisión o baja actividad antes de la concepción y no suspender fármacos por cuenta propia.</li>
+                            <li>Revisar serologías, estado vacunal y tratamiento teratógeno con tiempo suficiente.</li>
+                            <li>En anti-Ro/SSA y anti-La/SSB, reforzar coordinación obstétrica y vigilancia fetal.</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
+                        <p class="text-sm">Tabla operativa resumida a partir del manual v4 y actualizada con recomendaciones EULAR de reproducción/embarazo/lactancia. No sustituye la coordinación individual con especialistas.</p>
+                    </div>
+                    ${renderInfoTable(['Fármaco / clase', 'Embarazo', 'Lactancia', 'Cese orientativo', 'Notas'], pregnancyGuideRows)}
+                </div>
+            `;
+        }
+        function getSurgerySpecialContent() {
+            return `
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h3 class="font-bold text-blue-900 mb-2">Manejo perioperatorio</h3>
+                        <ul class="list-disc ml-4 text-blue-800 space-y-1">
+                            <li>Usar esta tabla para programar cirugía mayor electiva; individualizar en cirugía menor, infección activa o alto riesgo.</li>
+                            <li>Confirmar siempre con Reumatología, Anestesia y el equipo quirúrgico.</li>
+                            <li>Reiniciar terapias retenidas cuando la herida esté cerrada, sin drenaje relevante y sin infección, habitualmente alrededor de los 14 días.</li>
+                        </ul>
+                    </div>
+                    ${renderInfoTable(['Fármaco / clase', 'Conducta perioperatoria', 'Programar cirugía', 'Reinicio', 'Notas'], surgeryGuideRows)}
+                </div>
+            `;
+        }
+        function getDrugSheetPanelContent() {
+            const sheetKeys = pathologyDrugSheets[currentPatient.pathology] || [];
+            if (!sheetKeys.length) {
+                return `
+                    <div class="rounded-lg border border-clinical-200 bg-clinical-50 p-4">
+                        <p class="font-medium text-clinical-900 mb-2">Sin listado específico cargado</p>
+                        <p class="text-sm text-clinical-700">Para esta patología no he cargado una batería cerrada de fichas técnicas en la herramienta. Si quieres, en el siguiente paso puedo añadir un listado específico adicional.</p>
+                    </div>
+                `;
+            }
+            const cards = sheetKeys.map(key => {
+                const item = drugSheetCatalog[key];
+                if (!item) return '';
+                return `
+                    <div data-drug-sheet="${key}" class="rounded-lg border border-clinical-200 bg-white p-4">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="font-semibold text-clinical-900">${item.label}</p>
+                                <p class="text-xs text-clinical-500">Ficha CIMA mostrada con la presentación ${item.product}.</p>
+                            </div>
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                                Abrir ficha técnica
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            return `
+                <div class="space-y-4">
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
+                        <p class="font-semibold mb-1">Fuentes oficiales AEMPS / CIMA</p>
+                        <p class="text-sm">Listado orientativo de principios activos comercializados y usados en la herramienta para ${currentPatient.pathologyName}. La indicación exacta depende de la ficha concreta y de la presentación seleccionada.</p>
+                    </div>
+                    ${cards}
+                </div>
+            `;
+        }
+        function getCalcBadgeValue(calcType) {
+            const rawScore = currentPatient.scores[calcType.toUpperCase()];
+            if (rawScore === undefined) return '';
+            const numericScore = parseFloat(rawScore);
+            if (Number.isNaN(numericScore)) return rawScore;
+            if (['morisky', 'mars', 'entesis', 'dactilitis', 'essdai', 'sdi', 'sicca'].includes(calcType)) return numericScore.toFixed(0);
+            return rawScore;
+        }
+        function getCalcButtonStatus(calcType) {
+            const rawScore = currentPatient.scores[calcType.toUpperCase()];
+            if (rawScore === undefined) {
+                return 'bg-clinical-50 text-clinical-600 border-clinical-200 hover:border-accent-400';
+            }
+
+            const score = parseFloat(rawScore);
+            let level = 'green';
+
+            if (calcType === 'basdai') level = score >= 4 ? 'red' : 'green';
+            else if (calcType === 'das28') level = score > 5.1 ? 'red' : (score >= 2.6 ? 'yellow' : 'green');
+            else if (calcType === 'asdas') level = score >= 2.1 ? 'red' : (score >= 1.3 ? 'yellow' : 'green');
+            else if (calcType === 'dapsa') level = score > 14 ? 'red' : (score > 4 ? 'yellow' : 'green');
+            else if (calcType === 'rapid3') level = score >= 12 ? 'red' : (score >= 6 ? 'yellow' : 'green');
+            else if (calcType === 'haq') level = score > 2 ? 'red' : (score > 1 ? 'yellow' : 'green');
+            else if (calcType === 'psaid') level = score >= 4 ? 'red' : 'green';
+            else if (calcType === 'asashi') level = score >= 10 ? 'red' : (score >= 5 ? 'yellow' : 'green');
+            else if (calcType === 'sledai') level = score >= 6 ? 'red' : (score > 0 ? 'yellow' : 'green');
+            else if (calcType === 'sdi') level = score >= 3 ? 'red' : (score >= 1 ? 'yellow' : 'green');
+            else if (calcType === 'esspri') level = score >= 5 ? 'red' : 'green';
+            else if (calcType === 'essdai') level = score >= 14 ? 'red' : (score >= 5 ? 'yellow' : 'green');
+            else if (calcType === 'sicca') level = score >= 7 ? 'red' : (score >= 4 ? 'yellow' : 'green');
+            else if (calcType === 'entesis') level = score >= 3 ? 'red' : (score >= 1 ? 'yellow' : 'green');
+            else if (calcType === 'dactilitis') level = score >= 3 ? 'red' : (score >= 1 ? 'yellow' : 'green');
+            else if (calcType === 'basfi') level = score > 4 ? 'yellow' : 'green';
+            else if (calcType === 'morisky') level = score >= 4 ? 'green' : 'red';
+            else if (calcType === 'mars') level = score >= 23 ? 'green' : 'red';
+
+            if (level === 'red') return 'bg-red-50 text-red-700 border-red-200 hover:border-red-300';
+            if (level === 'yellow') return 'bg-yellow-50 text-yellow-800 border-yellow-300 hover:border-yellow-400';
+            return 'bg-green-50 text-green-700 border-green-200 hover:border-green-300';
+        }
         function createCalcButton(calcType, label) {
             const hasScore = currentPatient.scores[calcType.toUpperCase()] !== undefined;
-            const scoreVal = hasScore ? currentPatient.scores[calcType.toUpperCase()] : '';
-            const statusClass = hasScore ? 'bg-accent-50 text-accent-700 border-accent-200' : 'bg-clinical-50 text-clinical-600 border-clinical-200 hover:border-accent-400';
+            const scoreVal = hasScore ? getCalcBadgeValue(calcType) : '';
+            const statusClass = getCalcButtonStatus(calcType);
             const checkId = `check_calc_${calcType}`; 
             return `<div class="flex items-center gap-2"><input type="checkbox" id="${checkId}" class="hidden" ${hasScore ? 'checked' : ''}><button onclick="openCalculator('${calcType}')" class="mt-1.5 flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all w-full md:w-auto ${statusClass}"><i data-lucide="calculator" class="w-4 h-4"></i><span>${label}</span>${hasScore ? `<span class="ml-2 font-bold">${scoreVal}</span>` : ''}</button></div>`;
         }
@@ -568,10 +1239,11 @@
         // --- TEMPLATES ---
         function getInicioTemplate() {
             let calcs = '';
-            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index');
-            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI');
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
             else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('haq', 'Calcular HAQ-DI');
-            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K') + createCalcButton('sdi', 'Registrar SLICC/SDI');
+            else if (currentPatient.pathology === 'SS') calcs = createCalcButton('esspri', 'Calcular ESSPRI') + createCalcButton('essdai', 'Registrar ESSDAI') + createCalcButton('sicca', 'EVA sequedad');
 
             return `
                 ${createSection('Valoración Inicial Enfermera', 'clipboard-check', `
@@ -579,6 +1251,7 @@
                     ${createCheckbox('val2', 'Confirmar diagnóstico principal y fecha')}
                     ${createCheckbox('val3', 'Revisar antecedentes personales (HTA, DM, dislipemia, tabaco, alergias)')}
                     ${createCheckbox('val4', 'Registrar tratamiento actual (FAMEs, biológicos, corticoides)')}
+                    ${getPathologyInicioExtras()}
                     <div class="pt-2 pb-2">
                         <label class="text-sm font-medium text-clinical-700 block mb-2">Valorar dolor (EVA 0-10)</label>
                         ${createIntegerSelector('eva', null, 0, 10, 'updateEVA')}
@@ -621,10 +1294,61 @@
                     'Identificar desencadenantes: infecciones, estrés, exposición solar',
                     'Planificación familiar y anticoncepción compatible con tratamiento',
                     'No suspender hidroxicloroquina sin indicación médica'
+                ],
+                'SS': [
+                    'Higiene oral diaria con colutorios sin alcohol, hidratación frecuente y revisiones odontológicas',
+                    'Lágrimas artificiales sin conservantes y protección ocular en ambientes secos',
+                    'Registrar ESSPRI, sequedad oral/ocular y fatiga como parte del autocuidado',
+                    'Consultar ante parotidomegalia, púrpura, adenopatías o síntomas neurológicos nuevos'
                 ]
             };
             const items = content[currentPatient.pathology] || [];
             return items.map((txt, i) => createCheckbox(`edu_path_${i}`, txt)).join('');
+        }
+
+        function getPathologyInicioExtras() {
+            if (currentPatient.pathology === 'SS') {
+                return `
+                    ${createCheckbox('sj_val_1', 'Valorar xerostomía: dificultad para masticar/deglutir, necesidad de beber agua y ardor oral')}
+                    ${createCheckbox('sj_val_2', 'Valorar xeroftalmia: arenilla, fotofobia, visión borrosa y uso de lágrimas artificiales')}
+                    ${createCheckbox('sj_val_3', 'Registrar fatiga, artralgias y manifestaciones extraglandulares potenciales')}
+                    ${createCheckbox('sj_val_4', 'Revisar anti-Ro/SSA, anti-La/SSB y repercusión en planificación gestacional')}
+                `;
+            }
+            if (currentPatient.pathology === 'LES') {
+                return `${createCheckbox('les_val_1', 'Registrar dosis diaria de prednisona como marcador de control y toxicidad acumulada')}`;
+            }
+            return '';
+        }
+
+        function getPathologySeguimientoExtras() {
+            if (currentPatient.pathology === 'SS') {
+                return `
+                    ${createCheckbox('sj_seg_1', 'Revisar hemograma, función renal, gammaglobulinas y complemento')}
+                    ${createCheckbox('sj_seg_2', 'Valorar sequedad oral/ocular, caries, queratitis y necesidad de revisión odontológica/oftalmológica')}
+                    ${createCheckbox('sj_seg_3', 'Documentar síntomas sistémicos para apoyo en ESSDAI: púrpura, neuropatía, renal, pulmonar o hematológica')}
+                `;
+            }
+            if (currentPatient.pathology === 'LES') {
+                return `
+                    ${createCheckbox('les_seg_1', 'Revisar SLICC/SDI al menos en visita estructurada anual')}
+                    ${createCheckbox('les_seg_2', 'Registrar dosis de prednisona y objetivo de reducción ≤ 5 mg/día si la actividad lo permite')}
+                `;
+            }
+            return '';
+        }
+
+        function getPathologyBroteExtras() {
+            if (currentPatient.pathology === 'SS') {
+                return `
+                    ${createCheckbox('sj_bro_1', 'Diferenciar empeoramiento glandular de brote sistémico con nueva manifestación extraglandular')}
+                    ${createCheckbox('sj_bro_2', 'Comprobar parotidomegalia, adenopatías, púrpura, parestesias o datos renales')}
+                `;
+            }
+            if (currentPatient.pathology === 'LES') {
+                return `${createCheckbox('les_bro_1', 'Valorar actividad renal, neurológica y necesidad de escalar al circuito de brote lúpico')}`;
+            }
+            return '';
         }
 
         function getEducacionTemplate() {
@@ -660,6 +1384,7 @@
         }
 
         function getEducacionFarmacosTemplate() {
+            const accessCard = getDrugSheetAccessCard();
             // Template educación por clase de fármaco (genéricos)
             const antiTNF = `
                 <div class="bg-red-50 p-3 rounded border border-red-100 mb-3">
@@ -727,7 +1452,7 @@
                     ${createCheckbox('edu_mtx_5', 'Fotosensibilidad: protección solar')}
                 </div>`;
             
-            return antiTNF + antiIL17 + antiIL12_23 + antiCD20 + jakInhibitors + abatacept + metotrexato;
+            return accessCard + antiTNF + antiIL17 + antiIL12_23 + antiCD20 + jakInhibitors + abatacept + metotrexato;
         }
 
         function getPostInicioTemplate() {
@@ -736,6 +1461,7 @@
             else if (currentPatient.pathology === 'APs') calcs = createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('rapid3', 'Calcular RAPID3');
             else if (currentPatient.pathology === 'AR') calcs = createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('morisky', 'Morisky-Green');
             else if (currentPatient.pathology === 'LES') calcs = createCalcButton('morisky', 'Morisky-Green') + createCalcButton('mars', 'MARS-5');
+            else if (currentPatient.pathology === 'SS') calcs = createCalcButton('esspri', 'Calcular ESSPRI') + createCalcButton('sicca', 'EVA sequedad');
             return `
                 ${createSection('Verificación de Datos y Contexto', 'check-square', `
                     ${createCheckbox('ver1', 'Confirmar identidad y fecha inicio biológico')}
@@ -781,10 +1507,11 @@
 
         function getSeguimientoTemplate() {
             let calcs = '';
-            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index');
-            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI');
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('basfi', 'Calcular BASFI') + createCalcButton('asashi', 'ASAS Health Index') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('haq', 'Calcular HAQ-DI') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
             else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3') + createCalcButton('haq', 'Calcular HAQ-DI');
-            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K') + createCalcButton('sdi', 'Registrar SLICC/SDI');
+            else if (currentPatient.pathology === 'SS') calcs = createCalcButton('esspri', 'Calcular ESSPRI') + createCalcButton('essdai', 'Registrar ESSDAI') + createCalcButton('sicca', 'EVA sequedad');
 
             return `
                 ${createSection('Recordatorio y Analítica', 'history', `
@@ -792,6 +1519,7 @@
                     ${createCheckbox('ana1', 'Revisar hemograma completo')}
                     ${createCheckbox('ana2', 'Comprobar función hepática y renal')}
                     ${createCheckbox('ana3', 'Verificar reactantes fase aguda (VSG, PCR)')}
+                    ${getPathologySeguimientoExtras()}
                 `)}
                 ${createSection('Metrología y PROs', 'activity', `
                     <div class="pt-2 pb-2">
@@ -816,9 +1544,11 @@
 
         function getBroteTemplate() {
             let calcs = '';
-            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS');
-            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID');
+            if (currentPatient.pathology === 'EA') calcs = createCalcButton('basdai', 'Calcular BASDAI') + createCalcButton('asdas', 'Calcular ASDAS') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
+            else if (currentPatient.pathology === 'APs') calcs = createCalcButton('dapsa', 'Calcular DAPSA') + createCalcButton('psaid', 'Calcular PSAID') + createCalcButton('entesis', 'Registrar entesitis') + createCalcButton('dactilitis', 'Registrar dactilitis');
             else if (currentPatient.pathology === 'AR') calcs = createCalcButton('das28', 'Calcular DAS28') + createCalcButton('rapid3', 'Calcular RAPID3');
+            else if (currentPatient.pathology === 'LES') calcs = createCalcButton('sledai', 'Calcular SLEDAI-2K');
+            else if (currentPatient.pathology === 'SS') calcs = createCalcButton('esspri', 'Calcular ESSPRI') + createCalcButton('essdai', 'Registrar ESSDAI') + createCalcButton('sicca', 'EVA sequedad');
 
             return `
                 ${createSection('Evaluación Inicial del Brote', 'search', `
@@ -840,6 +1570,7 @@
                     ${createCheckbox('gra1', 'Síntomas sistémicos (fiebre, peso)')}
                     ${createCheckbox('gra2', 'Número articulaciones afectadas')}
                     ${createCheckbox('gra3', 'Afectación actividades vida diaria')}
+                    ${getPathologyBroteExtras()}
                     ${createCheckbox('gra4', `Signos de alarma: ${getAlarmSigns()}`)}
                 `)}
                 ${createSection('Medidas y Seguimiento', 'user-check', `
@@ -904,12 +1635,211 @@
             document.getElementById('calc-title').textContent = type.toUpperCase();
             document.getElementById('calc-body').innerHTML = getCalculatorForm(type);
             document.getElementById('calc-result-display').classList.add('hidden');
+            restoreCalculatorState(type);
+            bindCalculatorPersistence(type);
+            updateCalcActions(type);
+            renderStoredCalcResult(type);
+            lucide.createIcons();
         }
         function closeCalculator() {
             document.getElementById('calculator-panel').classList.add('translate-x-full');
             document.getElementById('slide-over-backdrop').classList.add('hidden');
             currentCalcType = null;
             loadChecklistContent();
+        }
+
+        function getStoredCalcAnswers(type) {
+            return currentPatient.calcAnswers?.[type] || {};
+        }
+
+        function getSelectedToggleLabels(prefix, labels) {
+            return labels.filter((_, index) => {
+                const input = document.getElementById(`${prefix}_${index}`);
+                return input && input.checked;
+            });
+        }
+
+        function getScoreExportLabel(key) {
+            const labels = {
+                'DAS28': 'DAS28',
+                'ASDAS': 'ASDAS',
+                'DAPSA': 'DAPSA',
+                'BASDAI': 'BASDAI',
+                'BASFI': 'BASFI',
+                'ASASHI': 'ASAS-HI',
+                'RAPID3': 'RAPID3',
+                'HAQ': 'HAQ-DI',
+                'PSAID': 'PSAID',
+                'SLEDAI': 'SLEDAI-2K',
+                'SDI': 'SLICC/SDI',
+                'ESSPRI': 'ESSPRI',
+                'ESSDAI': 'ESSDAI',
+                'SICCA': 'EVA sequedad oral/ocular',
+                'ENTESIS': currentPatient.pathology === 'EA' ? 'Entesitis (MASES)' : 'Entesitis (LEI)',
+                'DACTILITIS': 'Dactilitis',
+                'MORISKY': 'Morisky MMAS-4',
+                'MARS': 'MARS-5'
+            };
+            return labels[key] || key;
+        }
+
+        function getScoreExportValue(key) {
+            const rawValue = currentPatient.scores[key];
+            const detail = currentPatient.details?.[key];
+            if (rawValue === undefined) return '';
+            if (!detail) return rawValue;
+
+            if (key === 'ESSPRI') return `${rawValue} (sequedad ${detail.dryness}, fatiga ${detail.fatigue}, dolor ${detail.pain})`;
+            if (key === 'SICCA') return `${rawValue} (oral ${detail.oral}, ocular ${detail.ocular})`;
+            if (key === 'ESSDAI' && detail.scale) return `${rawValue} (${detail.scale})`;
+            if (key === 'SDI' && detail.level) return `${rawValue} (${detail.level})`;
+            if (key === 'ENTESIS' && detail.locations?.length) return `${rawValue}${detail.scale ? ` (${detail.scale})` : ''} [${detail.locations.join(', ')}]`;
+            if (key === 'DACTILITIS' && detail.locations?.length) return `${rawValue} [${detail.locations.join(', ')}]`;
+            return rawValue;
+        }
+
+        function getStructuredFindingLines() {
+            const lines = [];
+            const detailEntries = [
+                ['ENTESIS', getScoreExportLabel('ENTESIS')],
+                ['DACTILITIS', getScoreExportLabel('DACTILITIS')]
+            ];
+            detailEntries.forEach(([key, label]) => {
+                const detail = currentPatient.details?.[key];
+                if (!detail || !detail.locations?.length) return;
+                const scaleLabel = detail.scale ? ` (${detail.scale})` : '';
+                lines.push(`${label}${scaleLabel}: ${detail.locations.length} localizaciones`);
+                detail.locations.forEach(location => lines.push(`  - ${location}`));
+            });
+            return lines;
+        }
+
+        function saveCalculatorState(type) {
+            if (!type) return;
+            const body = document.getElementById('calc-body');
+            if (!body) return;
+
+            const answers = {};
+            body.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!el.id && !el.name) return;
+                const key = el.id || el.name;
+                if (el.type === 'radio') {
+                    if (el.checked) answers[key] = el.value;
+                    return;
+                }
+                if (el.type === 'checkbox') {
+                    answers[key] = el.checked;
+                    return;
+                }
+                answers[key] = el.value;
+            });
+            currentPatient.calcAnswers[type] = answers;
+        }
+
+        function restoreCalculatorState(type) {
+            const answers = getStoredCalcAnswers(type);
+            if (!Object.keys(answers).length) return;
+
+            Object.entries(answers).forEach(([key, value]) => {
+                const byId = document.getElementById(key);
+                if (byId) {
+                    if (byId.type === 'checkbox') byId.checked = Boolean(value);
+                    else byId.value = value;
+                    if (byId.id === 'sledai_lab_toggle') toggleSledaiLab();
+                    return;
+                }
+
+                const radios = document.getElementsByName(key);
+                if (!radios.length) return;
+                Array.from(radios).forEach(radio => {
+                    radio.checked = radio.value === String(value);
+                });
+            });
+        }
+
+        function bindCalculatorPersistence(type) {
+            const body = document.getElementById('calc-body');
+            if (!body) return;
+
+            body.querySelectorAll('input, select, textarea').forEach(el => {
+                const eventName = el.tagName === 'SELECT' || el.type === 'radio' || el.type === 'checkbox' ? 'change' : 'input';
+                el.addEventListener(eventName, () => saveCalculatorState(type));
+            });
+        }
+
+        function updateCalcActions(type) {
+            const clearBtn = document.getElementById('calc-clear-btn');
+            if (!clearBtn) return;
+            clearBtn.disabled = currentPatient.scores[type.toUpperCase()] === undefined && !Object.keys(getStoredCalcAnswers(type)).length;
+        }
+
+        function renderStoredCalcResult(type) {
+            const score = currentPatient.scores[type.toUpperCase()];
+            if (score === undefined) return;
+
+            const display = document.getElementById('calc-result-display');
+            if (!display) return;
+
+            let text = `Valor guardado: ${score}`;
+            let colorClass = 'bg-clinical-50 border-clinical-200 text-clinical-800';
+
+            if (type === 'morisky') {
+                const numericScore = parseFloat(score);
+                text = `Morisky-Green: ${getMoriskyLevel(numericScore)}`;
+                colorClass = getMoriskyColorClass(numericScore);
+            } else if (type === 'mars') {
+                const numericScore = parseFloat(score);
+                text = `MARS-5: ${numericScore.toFixed(0)}/25`;
+                colorClass = numericScore >= 23 ? 'bg-green-50 border-green-200 text-green-800' : 'bg-orange-50 border-orange-200 text-orange-800';
+            } else if (type === 'entesis') {
+                const numericScore = parseFloat(score);
+                text = `Entesitis: ${numericScore.toFixed(0)} localizaciones`;
+                colorClass = getCalcButtonStatus('entesis').replace('hover:border-red-300', '').replace('hover:border-yellow-400', '').replace('hover:border-green-300', '');
+            } else if (type === 'dactilitis') {
+                const numericScore = parseFloat(score);
+                text = `Dactilitis: ${numericScore.toFixed(0)} dedos`;
+                colorClass = getCalcButtonStatus('dactilitis').replace('hover:border-red-300', '').replace('hover:border-yellow-400', '').replace('hover:border-green-300', '');
+            }
+
+            display.textContent = text;
+            display.className = `mt-3 p-4 rounded-lg text-center font-bold text-lg border ${colorClass}`;
+            display.classList.remove('hidden');
+        }
+
+        function clearCurrentCalculator() {
+            if (!currentCalcType) return;
+
+            delete currentPatient.scores[currentCalcType.toUpperCase()];
+            if (currentPatient.calcAnswers) delete currentPatient.calcAnswers[currentCalcType];
+            if (currentPatient.details) delete currentPatient.details[currentCalcType.toUpperCase()];
+
+            const body = document.getElementById('calc-body');
+            if (body) {
+                body.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (el.type === 'radio' || el.type === 'checkbox') el.checked = false;
+                    else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                    else el.value = '';
+                });
+            }
+
+            const resultDisplay = document.getElementById('calc-result-display');
+            if (resultDisplay) resultDisplay.classList.add('hidden');
+
+            const check = document.getElementById(`check_calc_${currentCalcType}`);
+            if (check) check.checked = false;
+
+            updateCalcActions(currentCalcType);
+            checkAlerts();
+            loadChecklistContent();
+            showToast('Test limpiado');
+        }
+
+        function getMoriskyLevel(score) {
+            return score >= 4 ? 'Adherente' : 'No adherente';
+        }
+
+        function getMoriskyColorClass(score) {
+            return score >= 4 ? 'bg-green-50 border-green-200 text-green-800' : 'bg-orange-50 border-orange-200 text-orange-800';
         }
 
         const specialContent = {
@@ -934,39 +1864,8 @@
                         </div>
                     </div>
                 </div>`,
-            emb: `
-                <div class="space-y-4">
-                    <div class="p-4 bg-pink-50 border border-pink-200 rounded-lg">
-                        <h3 class="font-bold text-pink-900 mb-2">Planificación preconcepcional</h3>
-                        <ul class="list-disc ml-4 text-pink-800 space-y-1">
-                            <li>Detectar deseo gestacional y avisar a reumatología con antelación</li>
-                            <li>Revisar vacunación preconcepcional (rubéola, varicela)</li>
-                            <li>Mantener anticoncepción eficaz hasta ajuste terapéutico seguro</li>
-                            <li>No suspender tratamiento sin orden médica</li>
-                        </ul>
-                    </div>
-                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <h3 class="font-bold text-amber-900 mb-2">Rol enfermero</h3>
-                        <p class="text-sm text-amber-800">Detectar la situación, coordinar cita con reumatología/obstetricia y reforzar adherencia al plan acordado.</p>
-                    </div>
-                </div>`,
-            cir: `
-                <div class="space-y-4">
-                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h3 class="font-bold text-blue-900 mb-3">Suspensión perioperatoria orientativa</h3>
-                        <p class="text-xs text-blue-700 mb-3 italic">Confirmar siempre con reumatólogo y anestesia</p>
-                        <table class="w-full text-xs border-collapse">
-                            <thead><tr class="bg-blue-100"><th class="p-2 border border-blue-200 text-left">Fármaco</th><th class="p-2 border border-blue-200">Suspender antes</th><th class="p-2 border border-blue-200">Reinicio</th></tr></thead>
-                            <tbody>
-                                <tr><td class="p-2 border border-blue-200 font-medium">Adalimumab</td><td class="p-2 border border-blue-200 text-center">4 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
-                                <tr class="bg-blue-50"><td class="p-2 border border-blue-200 font-medium">Etanercept</td><td class="p-2 border border-blue-200 text-center">2 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
-                                <tr><td class="p-2 border border-blue-200 font-medium">Infliximab</td><td class="p-2 border border-blue-200 text-center">4-8 semanas</td><td class="p-2 border border-blue-200 text-center">2-4 sem</td></tr>
-                                <tr class="bg-blue-50"><td class="p-2 border border-blue-200 font-medium">JAKi</td><td class="p-2 border border-blue-200 text-center">3-5 días</td><td class="p-2 border border-blue-200 text-center">1-2 sem</td></tr>
-                                <tr><td class="p-2 border border-blue-200 font-medium">MTX/HCQ/SSZ</td><td class="p-2 border border-blue-200 text-center">Según tipo de cirugía</td><td class="p-2 border border-blue-200 text-center">Individualizar</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>`,
+            emb: getPregnancySpecialContent(),
+            cir: getSurgerySpecialContent(),
             car: `
                 <div class="space-y-4">
                     <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -1012,6 +1911,19 @@
             const active = document.getElementById(`stab-${tab}`);
             if (active) active.classList.add('active-stab');
             lucide.createIcons();
+        }
+        function openDrugFichaPanel() {
+            const title = document.getElementById('drug-ficha-title');
+            const content = document.getElementById('drug-ficha-content');
+            if (title) title.innerHTML = `<i data-lucide="book-open-text" class="text-blue-700"></i>Fichas técnicas - ${currentPatient.pathologyName || 'Patología activa'}`;
+            if (content) content.innerHTML = getDrugSheetPanelContent();
+            document.getElementById('drug-ficha-panel').classList.remove('translate-x-full');
+            document.getElementById('drug-ficha-backdrop').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function closeDrugFichaPanel() {
+            document.getElementById('drug-ficha-panel').classList.add('translate-x-full');
+            document.getElementById('drug-ficha-backdrop').classList.add('hidden');
         }
 
         function toggleSledaiLab() {
@@ -1247,9 +2159,80 @@
                     </div>
                 </div>`;
             }
+            if (type === 'sdi') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>SLICC/ACR Damage Index (SDI)</strong><br>
+                        Registre el valor total del índice de daño acumulado ya calculado en la visita estructurada.
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">Puntuación total SDI</label>
+                        <input type="number" id="sdi_total" min="0" max="47" step="1" value="0" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    <p class="text-xs text-clinical-500 italic">Interpretación orientativa: 0 sin daño, 1-2 daño establecido, ≥3 daño severo.</p>
+                </div>`;
+            }
+            if (type === 'esspri') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>ESSPRI</strong><br>
+                        Síntomas de Sjögren en las últimas 2 semanas. Estado aceptable &lt; 5; inaceptable ≥ 5.
+                    </div>
+                    ${createIntegerSelector('esspri_dryness', '1. Sequedad (0-10)', 0, 10)}
+                    ${createIntegerSelector('esspri_fatigue', '2. Fatiga (0-10)', 0, 10)}
+                    ${createIntegerSelector('esspri_pain', '3. Dolor musculoesquelético (0-10)', 0, 10)}
+                </div>`;
+            }
+            if (type === 'essdai') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>ESSDAI</strong><br>
+                        Registre la puntuación total consensuada con el equipo médico. Baja &lt; 5, moderada 5-13, alta ≥ 14.
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-clinical-800 mb-2">Puntuación total ESSDAI</label>
+                        <input type="number" id="essdai_total" min="0" max="123" step="1" value="0" class="w-full p-3 border rounded-lg bg-white text-clinical-800">
+                    </div>
+                    <p class="text-xs text-clinical-500 italic">Dominios que suelen requerir soporte médico: constitucional, glandular, articular, cutáneo, pulmonar, renal, muscular, SNP, SNC, hematológico y serológico.</p>
+                </div>`;
+            }
+            if (type === 'sicca') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>EVA de sequedad oral y ocular</strong><br>
+                        Cuantifique ambos síntomas por separado. Umbral de alarma orientativo: ≥ 7.
+                    </div>
+                    ${createIntegerSelector('sicca_oral', '1. Sequedad oral (0-10)', 0, 10)}
+                    ${createIntegerSelector('sicca_ocular', '2. Sequedad ocular (0-10)', 0, 10)}
+                </div>`;
+            }
+            if (type === 'entesis') {
+                const sites = enthesisSites[currentPatient.pathology] || enthesisSites.APs;
+                const scaleName = currentPatient.pathology === 'EA' ? 'MASES' : 'Leeds Enthesitis Index (LEI)';
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>Registro de entesitis - ${scaleName}</strong><br>
+                        Active cada localización dolorosa a la palpación. Se exportan el recuento total y las localizaciones afectadas.
+                    </div>
+                    ${createToggleGrid('ent', sites, currentPatient.pathology === 'EA' ? 'grid-cols-2' : 'grid-cols-2')}
+                </div>`;
+            }
+            if (type === 'dactilitis') {
+                return `<div class="space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        <strong>Registro de dactilitis por dedos</strong><br>
+                        Active cada dedo afectado. Se exportan el recuento total y la localización exacta.
+                    </div>
+                    ${createToggleGrid('dac', dactylitisDigits, 'grid-cols-2')}
+                </div>`;
+            }
             if(type === 'morisky') {
                  return `<div class="space-y-4">
                     <h4 class="font-bold border-b pb-2">Morisky-Green (4 ítems)</h4>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                        Interpretación clásica: el test sólo se considera positivo para buena adherencia si el patrón es <strong>No / Sí / No / No</strong>.<br>
+                        Cualquier otra combinación se clasifica como <strong>No adherente</strong>.
+                    </div>
                     ${['1. ¿Olvida alguna vez tomar los medicamentos para tratar su enfermedad?','2. ¿Toma los medicamentos a la hora indicada?','3. Cuando se encuentra bien, ¿deja de tomar la medicación?','4. Si alguna vez le sienta mal, ¿deja de tomarla?'].map((q,i)=>`
                         <div class="flex justify-between items-center p-3 bg-white border rounded mb-2"><span class="text-sm w-2/3 font-medium">${q}</span><div class="flex gap-2">
                         <label class="text-sm border px-3 py-1 rounded cursor-pointer hover:bg-clinical-50"><input type="radio" name="mor_${i}" value="${i===1?'1':'0'}" class="mr-1">Sí</label>
@@ -1404,7 +2387,11 @@
                 das28: ['das_dolor', 'das_inflam', 'das_eva'],
                 asdas: ['asdas_back', 'asdas_peripheral', 'asdas_entheseal', 'asdas_pga', 'asdas_stiffness'],
                 dapsa: ['dapsa_das', 'dapsa_dis', 'dapsa_pcr', 'dapsa_pain', 'dapsa_pga'],
-                basfi: ['basfi_1', 'basfi_2', 'basfi_3', 'basfi_4', 'basfi_5', 'basfi_6', 'basfi_7', 'basfi_8', 'basfi_9', 'basfi_10']
+                basfi: ['basfi_1', 'basfi_2', 'basfi_3', 'basfi_4', 'basfi_5', 'basfi_6', 'basfi_7', 'basfi_8', 'basfi_9', 'basfi_10'],
+                sdi: ['sdi_total'],
+                esspri: ['esspri_dryness', 'esspri_fatigue', 'esspri_pain'],
+                essdai: ['essdai_total'],
+                sicca: ['sicca_oral', 'sicca_ocular']
             };
 
             const radioGroups = {
@@ -1442,9 +2429,10 @@
         }
 
         function performCalculation() {
-            let result = 0, txt = '', colorClass = 'bg-gray-50 border-gray-200 text-gray-800';
+            let result = 0, txt = '', colorClass = 'bg-gray-50 border-gray-200 text-gray-800', detailData = null;
 
             if (!ensureRequiredFields(currentCalcType)) return;
+            saveCalculatorState(currentCalcType);
             
             if (currentCalcType === 'basdai') {
                 let s = 0; for(let i=1; i<=4; i++) s += parseFloat(document.getElementById(`bas_${i}`).value)||0;
@@ -1539,10 +2527,9 @@
                     const radios = document.getElementsByName(`mor_${i}`);
                     for(let r of radios) if(r.checked && r.value === '1') correct++; 
                  }
-                 result = correct;
-                 if(result < 4) colorClass = 'bg-orange-50 border-orange-200 text-orange-800';
-                 else colorClass = 'bg-green-50 border-green-200 text-green-800';
-                 txt = result === 4 ? "Adherente (4/4)" : "No Adherente (<4)";
+                 result = correct === 4 ? 4 : 0;
+                 colorClass = getMoriskyColorClass(result);
+                 txt = `Morisky-Green: ${getMoriskyLevel(result)}`;
             }
             else if (currentCalcType === 'mars') {
                 let s = 0; 
@@ -1643,9 +2630,65 @@
                 else colorClass = 'bg-green-50 border-green-200 text-green-800';
                 txt = `BASFI: ${result.toFixed(1)} / 10 (${result > 4 ? 'Funcionalidad afectada' : 'Funcionalidad preservada'})`;
             }
+            else if (currentCalcType === 'sdi') {
+                result = parseFloat(document.getElementById('sdi_total').value) || 0;
+                if (result >= 3) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if (result >= 1) colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `SLICC/SDI: ${result.toFixed(0)} (${result >= 3 ? 'Daño severo' : result >= 1 ? 'Daño establecido' : 'Sin daño acumulado'})`;
+                detailData = { level: result >= 3 ? 'Daño severo' : result >= 1 ? 'Daño establecido' : 'Sin daño acumulado' };
+            }
+            else if (currentCalcType === 'esspri') {
+                const dryness = parseFloat(document.getElementById('esspri_dryness').value) || 0;
+                const fatigue = parseFloat(document.getElementById('esspri_fatigue').value) || 0;
+                const pain = parseFloat(document.getElementById('esspri_pain').value) || 0;
+                result = (dryness + fatigue + pain) / 3;
+                colorClass = result >= 5 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800';
+                txt = `ESSPRI: ${result.toFixed(1)} / 10 (${result >= 5 ? 'Estado sintomático inaceptable' : 'Estado aceptable'})`;
+                detailData = { dryness: dryness.toFixed(0), fatigue: fatigue.toFixed(0), pain: pain.toFixed(0) };
+            }
+            else if (currentCalcType === 'essdai') {
+                result = parseFloat(document.getElementById('essdai_total').value) || 0;
+                if (result >= 14) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if (result >= 5) colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `ESSDAI: ${result.toFixed(0)} (${result >= 14 ? 'Actividad sistémica alta' : result >= 5 ? 'Actividad sistémica moderada' : 'Actividad sistémica baja'})`;
+                detailData = { scale: result >= 14 ? 'Actividad sistémica alta' : result >= 5 ? 'Actividad sistémica moderada' : 'Actividad sistémica baja' };
+            }
+            else if (currentCalcType === 'sicca') {
+                const oral = parseFloat(document.getElementById('sicca_oral').value) || 0;
+                const ocular = parseFloat(document.getElementById('sicca_ocular').value) || 0;
+                result = Math.max(oral, ocular);
+                if (result >= 7) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if (result >= 4) colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `EVA sequedad: oral ${oral.toFixed(0)} / ocular ${ocular.toFixed(0)} (máxima ${result.toFixed(0)})`;
+                detailData = { oral: oral.toFixed(0), ocular: ocular.toFixed(0) };
+            }
+            else if (currentCalcType === 'entesis') {
+                const siteLabels = enthesisSites[currentPatient.pathology] || enthesisSites.APs;
+                const selectedSites = getSelectedToggleLabels('ent', siteLabels);
+                result = selectedSites.length;
+                if (result >= 3) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if (result >= 1) colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `Entesitis: ${result} localización${result === 1 ? '' : 'es'} (${currentPatient.pathology === 'EA' ? 'MASES' : 'LEI'})`;
+                detailData = { locations: selectedSites, scale: currentPatient.pathology === 'EA' ? 'MASES' : 'LEI' };
+            }
+            else if (currentCalcType === 'dactilitis') {
+                const selectedDigits = getSelectedToggleLabels('dac', dactylitisDigits);
+                result = selectedDigits.length;
+                if (result >= 3) colorClass = 'bg-red-50 border-red-200 text-red-800';
+                else if (result >= 1) colorClass = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+                else colorClass = 'bg-green-50 border-green-200 text-green-800';
+                txt = `Dactilitis: ${result} dedo${result === 1 ? '' : 's'} afectado${result === 1 ? '' : 's'}`;
+                detailData = { locations: selectedDigits };
+            }
             
             // Save and Feedback
             currentPatient.scores[currentCalcType.toUpperCase()] = typeof result === 'number' ? result.toFixed(1) : result;
+            if (detailData) currentPatient.details[currentCalcType.toUpperCase()] = detailData;
+            else delete currentPatient.details[currentCalcType.toUpperCase()];
             
             // Mark checklist
             const check = document.getElementById(`check_calc_${currentCalcType}`);
@@ -1656,6 +2699,7 @@
             d.textContent = txt; 
             d.className = `mt-3 p-4 rounded-lg text-center font-bold text-lg border ${colorClass}`;
             d.classList.remove('hidden');
+            updateCalcActions(currentCalcType);
             
             // NO auto-save - manual save only
             checkAlerts();
@@ -1692,6 +2736,14 @@
             
             if (currentPatient.scores['RAPID3'] >= 12) addAlert(container, 'Gravedad AR Alta', `RAPID3 > 12. Alta carga sintomática.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
             if (currentPatient.scores['SLEDAI'] >= 6) addAlert(container, 'Actividad Lúpica Significativa', `SLEDAI > 6. Coordinar con médico.`, 'shield-alert', 'bg-red-50 text-red-800 border-red-200');
+            if (currentPatient.scores['SDI'] >= 3) addAlert(container, 'Daño Acumulado LES', `SLICC/SDI ≥ 3. Revisión estructurada con Reumatología.`, 'shield', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.scores['SDI'] >= 1) addAlert(container, 'Daño Acumulado LES', `SLICC/SDI ≥ 1. Mantener monitorización anual del daño.`, 'shield', 'bg-yellow-50 text-yellow-800 border-yellow-200');
+            if (currentPatient.scores['ESSPRI'] >= 5) addAlert(container, 'Síntomas Sjögren No Controlados', `ESSPRI ≥ 5. Revisar sequedad, fatiga, dolor y tratamiento sintomático.`, 'droplets', 'bg-orange-50 text-orange-800 border-orange-200');
+            if (currentPatient.scores['ESSDAI'] >= 14) addAlert(container, 'Actividad Sistémica Alta Sjögren', `ESSDAI ≥ 14. Coordinar valoración urgente/preferente.`, 'alert-triangle', 'bg-red-50 text-red-800 border-red-200');
+            else if (currentPatient.scores['ESSDAI'] >= 5) addAlert(container, 'Actividad Sistémica Sjögren', `ESSDAI 5-13. Comunicar a Reumatología y revisar dominio afectado.`, 'activity', 'bg-yellow-50 text-yellow-800 border-yellow-200');
+            if (currentPatient.scores['SICCA'] >= 7) addAlert(container, 'Sequedad Severa Sjögren', `EVA oral/ocular ≥ 7. Intensificar medidas locales y revisar complicaciones.`, 'eye', 'bg-orange-50 text-orange-800 border-orange-200');
+            if (currentPatient.scores['ENTESIS'] >= 3) addAlert(container, 'Entesitis Relevante', `Entesitis en ${currentPatient.scores['ENTESIS']} localizaciones. Documentar dominios y revisar ajuste terapéutico.`, 'map-pinned', 'bg-orange-50 text-orange-800 border-orange-200');
+            if (currentPatient.scores['DACTILITIS'] >= 1) addAlert(container, 'Dactilitis Presente', `Dactilitis en ${currentPatient.scores['DACTILITIS']} dedos. Registrar localización exacta.`, 'hand', 'bg-yellow-50 text-yellow-800 border-yellow-200');
             
             // Alertas de adherencia
             if (currentPatient.scores['MORISKY'] < 4) addAlert(container, 'Adherencia Subóptima', `Morisky < 4. Intervención educativa necesaria.`, 'user-x', 'bg-orange-50 text-orange-800 border-orange-200');
@@ -1716,7 +2768,14 @@
             // NO auto-save - manual save only
         }
         function triggerReset() { openModal('Reiniciar Paciente', 'Se borrarán todos los datos actuales. ¿Continuar?', executeReset); }
-        function executeReset() { closeModal(); currentPatient = { id:'', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] }; goToView('pathology'); updateSidebarContext(); enableSideActions(false); showToast("Sesión reiniciada"); }
+        function executeReset() {
+            closeModal();
+            resetPatientClinicalState(false);
+            goToView('pathology');
+            updateSidebarContext();
+            enableSideActions(false);
+            showToast("Sesión reiniciada");
+        }
 
         function openModal(title, msg, onConfirm) {
             const m = document.getElementById('confirmation-modal');
@@ -1738,7 +2797,7 @@
         function loadState() {
             // No carga datos de pacientes anteriores
             // Solo asegura que el paciente actual esté limpio al iniciar
-            currentPatient = { id: '', name: '', pathology: null, visitType: null, eva: null, scores: {}, checklist: {}, alerts: [] };
+            currentPatient = createEmptyPatient();
             updateSidebarContext();
             goToView('pathology');
         }
@@ -1806,6 +2865,14 @@
             if (parseFloat(sc['DAPSA']) > 28) alertLines.push('DAPSA actividad alta');
             if (parseFloat(sc['BASDAI']) >= 4) alertLines.push('BASDAI >= 4');
             if (parseFloat(sc['SLEDAI']) >= 6) alertLines.push('SLEDAI actividad lúpica significativa');
+            if (parseFloat(sc['SDI']) >= 3) alertLines.push('SLICC/SDI con daño severo');
+            else if (parseFloat(sc['SDI']) >= 1) alertLines.push('SLICC/SDI con daño acumulado');
+            if (parseFloat(sc['ESSPRI']) >= 5) alertLines.push('ESSPRI inaceptable');
+            if (parseFloat(sc['ESSDAI']) >= 14) alertLines.push('ESSDAI actividad sistémica alta');
+            else if (parseFloat(sc['ESSDAI']) >= 5) alertLines.push('ESSDAI actividad sistémica moderada');
+            if (parseFloat(sc['SICCA']) >= 7) alertLines.push('Sequedad oral/ocular severa');
+            if (parseFloat(sc['ENTESIS']) >= 3) alertLines.push('Entesitis en múltiples localizaciones');
+            if (parseFloat(sc['DACTILITIS']) >= 1) alertLines.push('Dactilitis presente');
             if (parseFloat(sc['RAPID3']) >= 12) alertLines.push('RAPID3 severo');
             if (eva >= 7) alertLines.push('Dolor severo EVA >= 7');
 
@@ -1841,28 +2908,29 @@
                 doc.text(`EVA (Dolor): ${eva} / 10`, margin, y);
                 y += 6;
             }
-            const scoreLabels = {
-                'DAS28': 'DAS28',
-                'ASDAS': 'ASDAS',
-                'DAPSA': 'DAPSA',
-                'BASDAI': 'BASDAI',
-                'BASFI': 'BASFI',
-                'ASASHI': 'ASAS-HI',
-                'RAPID3': 'RAPID3',
-                'HAQ': 'HAQ-DI',
-                'PSAID': 'PSAID',
-                'SLEDAI': 'SLEDAI-2K',
-                'MORISKY': 'Morisky MMAS-4',
-                'MARS': 'MARS-5'
-            };
             Object.keys(sc).forEach(key => {
-                doc.text(`${scoreLabels[key] || key}: ${sc[key]}`, margin, y);
-                y += 6;
+                const scoreLines = doc.splitTextToSize(`${getScoreExportLabel(key)}: ${getScoreExportValue(key)}`, pageW - margin * 2);
+                doc.text(scoreLines, margin, y);
+                y += scoreLines.length * 4 + 2;
+            });
+            const structuredFindings = getStructuredFindingLines();
+            structuredFindings.forEach(line => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                const isLocationLine = line.startsWith('  - ');
+                const text = isLocationLine ? line.trim() : line;
+                const x = isLocationLine ? margin + 4 : margin;
+                const lines = doc.splitTextToSize(text, pageW - margin * 2 - (isLocationLine ? 4 : 0));
+                doc.text(lines, x, y);
+                y += lines.length * 4 + 2;
             });
             y += 4;
 
             const checkedItems = [];
             document.querySelectorAll('#checklist-renderer input[type="checkbox"]:checked').forEach(cb => {
+                if (cb.id && cb.id.startsWith('check_calc_')) return;
                 const label = cb.closest('label')?.querySelector('span')?.textContent || cb.id;
                 if (label && label.trim().length > 2) checkedItems.push(label.trim());
             });
@@ -1937,7 +3005,7 @@
             
             if (Object.keys(currentPatient.scores).length > 0) {
                 report.push('ÍNDICES DE ACTIVIDAD:');
-                const scoreOrder = ['DAS28', 'ASDAS', 'BASDAI', 'PSAID', 'SLEDAI', 'RAPID3', 'HAQ', 'ASASHI', 'BASFI', 'DAPSA', 'MORISKY', 'MARS'];
+                const scoreOrder = ['DAS28', 'ASDAS', 'BASDAI', 'PSAID', 'SLEDAI', 'SDI', 'ESSPRI', 'ESSDAI', 'SICCA', 'ENTESIS', 'DACTILITIS', 'RAPID3', 'HAQ', 'ASASHI', 'BASFI', 'DAPSA', 'MORISKY', 'MARS'];
                 
                 scoreOrder.forEach(score => {
                     if (currentPatient.scores[score] !== undefined) {
@@ -1961,22 +3029,52 @@
                             if (val >= 6) activityLevel = 'ACTIVIDAD SIGNIFICATIVA';
                             else if (val > 0) activityLevel = 'ACTIVIDAD LEVE';
                             else activityLevel = 'INACTIVA';
+                        } else if (score === 'SDI') {
+                            if (val >= 3) activityLevel = 'DAÑO SEVERO';
+                            else if (val >= 1) activityLevel = 'DAÑO ESTABLECIDO';
+                            else activityLevel = 'SIN DAÑO';
+                        } else if (score === 'ESSPRI') {
+                            if (val >= 5) activityLevel = 'ESTADO INACEPTABLE';
+                            else activityLevel = 'ESTADO ACEPTABLE';
+                        } else if (score === 'ESSDAI') {
+                            if (val >= 14) activityLevel = 'ACTIVIDAD SISTÉMICA ALTA';
+                            else if (val >= 5) activityLevel = 'ACTIVIDAD SISTÉMICA MODERADA';
+                            else activityLevel = 'ACTIVIDAD SISTÉMICA BAJA';
+                        } else if (score === 'SICCA') {
+                            if (val >= 7) activityLevel = 'SEQUEDAD SEVERA';
+                            else if (val >= 4) activityLevel = 'SEQUEDAD MODERADA';
+                            else activityLevel = 'SEQUEDAD LEVE';
+                        } else if (score === 'ENTESIS') {
+                            if (val >= 3) activityLevel = 'ENTESITIS RELEVANTE';
+                            else if (val >= 1) activityLevel = 'ENTESITIS PRESENTE';
+                            else activityLevel = 'SIN ENTESITIS';
+                        } else if (score === 'DACTILITIS') {
+                            if (val >= 1) activityLevel = 'DACTILITIS PRESENTE';
+                            else activityLevel = 'SIN DACTILITIS';
                         } else if (score === 'RAPID3') {
                             if (val >= 12) activityLevel = 'SEVERO';
                             else if (val >= 6) activityLevel = 'MODERADO';
                             else activityLevel = 'LEVE';
                         }
                         
-                        report.push(`• ${score}: ${currentPatient.scores[score]}${activityLevel ? ' - ' + activityLevel : ''}`);
+                        report.push(`• ${getScoreExportLabel(score)}: ${getScoreExportValue(score)}${activityLevel ? ' - ' + activityLevel : ''}`);
                     }
                 });
                 
                 // Otros scores no listados en orden específico
                 Object.keys(currentPatient.scores).forEach(score => {
                     if (!scoreOrder.includes(score)) {
-                        report.push(`• ${score}: ${currentPatient.scores[score]}`);
+                        report.push(`• ${getScoreExportLabel(score)}: ${getScoreExportValue(score)}`);
                     }
                 });
+                const structuredFindingLines = getStructuredFindingLines();
+                if (structuredFindingLines.length > 0) {
+                    report.push('');
+                    report.push('HALLAZGOS ESTRUCTURADOS:');
+                    structuredFindingLines.forEach(line => {
+                        report.push(line.startsWith('  - ') ? line : `• ${line}`);
+                    });
+                }
                 report.push('');
             }
             
@@ -1999,6 +3097,13 @@
             if (currentPatient.scores['ASDAS'] >= 2.1 && currentPatient.scores['ASDAS'] <= 3.5) alerts.push('ACTIVIDAD ALTA EA - Monitorear respuesta');
             if (currentPatient.scores['BASDAI'] >= 4) alerts.push('BASDAI ≥ 4 - Considerar cambio de biológico');
             if (currentPatient.scores['SLEDAI'] >= 6) alerts.push('Actividad Lúpica Significativa - Coordinar con médico');
+            if (currentPatient.scores['SDI'] >= 3) alerts.push('Daño acumulado severo LES - Revisar con Reumatología');
+            if (currentPatient.scores['ESSPRI'] >= 5) alerts.push('Síntomas de Sjögren no controlados - Revisar medidas locales y sistémicas');
+            if (currentPatient.scores['ESSDAI'] >= 14) alerts.push('Actividad sistémica alta en Sjögren - Escalar de forma preferente/urgente');
+            if (currentPatient.scores['ESSDAI'] >= 5 && currentPatient.scores['ESSDAI'] < 14) alerts.push('Actividad sistémica moderada en Sjögren - Comunicar a Reumatología');
+            if (currentPatient.scores['SICCA'] >= 7) alerts.push('Sequedad severa Sjögren - Reforzar cuidados y revisar complicaciones');
+            if (currentPatient.scores['ENTESIS'] >= 3) alerts.push('Entesitis relevante - Registrar localización y revisar actividad');
+            if (currentPatient.scores['DACTILITIS'] >= 1) alerts.push('Dactilitis presente - Registrar dedos afectados');
             if (currentPatient.scores['RAPID3'] >= 12) alerts.push('RAPID3 Severo - Alta carga sintomática');
             if (currentPatient.scores['MORISKY'] < 4) alerts.push('Adherencia Subóptima - Intervención educativa');
             if (currentPatient.scores['MARS'] < 23) alerts.push('Riesgo No Adherencia - Evaluar barreras');
@@ -2015,7 +3120,7 @@
             }
             
             // Ítems completados
-            const completedItems = Object.keys(currentPatient.checklist).filter(id => currentPatient.checklist[id]);
+            const completedItems = Object.keys(currentPatient.checklist).filter(id => currentPatient.checklist[id] && !id.startsWith('check_calc_'));
             if (completedItems.length > 0) {
                 report.push('═══════════════════════════════════════════');
                 report.push('         ÍTEMS COMPLETADOS');
