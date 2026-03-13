@@ -958,39 +958,7 @@ Check your Browserslist config to be sure that your targets are set up correctly
             'Pie derecho 1', 'Pie derecho 2', 'Pie derecho 3', 'Pie derecho 4', 'Pie derecho 5',
             'Pie izquierdo 1', 'Pie izquierdo 2', 'Pie izquierdo 3', 'Pie izquierdo 4', 'Pie izquierdo 5'
         ];
-        const drugSheetCatalog = {
-            adalimumab: { label: 'Adalimumab', product: 'Amgevita', url: 'https://cima.aemps.es/cima/dochtml/ft/1161164010/FT_1161164010.html' },
-            certolizumab: { label: 'Certolizumab pegol', product: 'Cimzia', url: 'https://cima.aemps.es/cima/dochtml/ft/109544001/FT_109544001.html' },
-            etanercept: { label: 'Etanercept', product: 'Benepali', url: 'https://cima.aemps.es/cima/dochtml/ft/1151074001/FT_1151074001.html' },
-            golimumab: { label: 'Golimumab', product: 'Simponi', url: 'https://cima.aemps.es/cima/dochtml/ft/09546001/FT_09546001.html' },
-            infliximab: { label: 'Infliximab', product: 'Remicade', url: 'https://cima.aemps.es/cima/dochtml/ft/99116001/FT_99116001.html' },
-            secukinumab: { label: 'Secukinumab', product: 'Cosentyx', url: 'https://cima.aemps.es/cima/dochtml/ft/114980003/FT_114980003.html' },
-            ixekizumab: { label: 'Ixekizumab', product: 'Taltz', url: 'https://cima.aemps.es/cima/dochtml/ft/1151085004/FT_1151085004.html' },
-            ustekinumab: { label: 'Ustekinumab', product: 'Pyzchiva', url: 'https://cima.aemps.es/cima/dochtml/ft/1241801003/FT_1241801003.html' },
-            abatacept: { label: 'Abatacept', product: 'Orencia', url: 'https://cima.aemps.es/cima/dochtml/ft/07389008/FT_07389008.html' },
-            rituximab: { label: 'Rituximab', product: 'MabThera', url: 'https://cima.aemps.es/cima/dochtml/ft/98067001/FT_98067001.html' },
-            tocilizumab: { label: 'Tocilizumab', product: 'Avtozma', url: 'https://cima.aemps.es/cima/dochtml/ft/1241896007/FT_1241896007.html' },
-            sarilumab: { label: 'Sarilumab', product: 'Kevzara', url: 'https://cima.aemps.es/cima/dochtml/ft/1171196005/FT_1171196005.html' },
-            tofacitinib: { label: 'Tofacitinib', product: 'Xeljanz', url: 'https://cima.aemps.es/cima/dochtml/ft/1171178007/FT_1171178007.html' },
-            baricitinib: { label: 'Baricitinib', product: 'Olumiant', url: 'https://cima.aemps.es/cima/dochtml/ft/1161170002/FT_1161170002.html' },
-            upadacitinib: { label: 'Upadacitinib', product: 'Rinvoq', url: 'https://cima.aemps.es/cima/dochtml/ft/1191404001/FT_1191404001.html' },
-            apremilast: { label: 'Apremilast', product: 'Otezla', url: 'https://cima.aemps.es/cima/dochtml/ft/114981001/FT_114981001.html' },
-            metotrexato: { label: 'Metotrexato', product: 'Imeth', url: 'https://cima.aemps.es/cima/dochtml/ft/79580/FT_79580.html' },
-            leflunomida: { label: 'Leflunomida', product: 'Leflunomida Cinfa', url: 'https://cima.aemps.es/cima/dochtml/ft/80684/FT_80684.html' },
-            sulfasalazina: { label: 'Sulfasalazina', product: 'Salazopyrina', url: 'https://cima.aemps.es/cima/dochtml/ft/39681/FT_39681.html' },
-            hidroxicloroquina: { label: 'Hidroxicloroquina', product: 'Duplaxil', url: 'https://cima.aemps.es/cima/dochtml/ft/84048/FT_84048.html' },
-            azatioprina: { label: 'Azatioprina', product: 'Immufalk', url: 'https://cima.aemps.es/cima/dochtml/ft/78164/FT_78164.html' },
-            belimumab: { label: 'Belimumab', product: 'Benlysta', url: 'https://cima.aemps.es/cima/dochtml/ft/11700001/FT_11700001.html' },
-            anifrolumab: { label: 'Anifrolumab', product: 'Saphnelo', url: 'https://cima.aemps.es/cima/dochtml/ft/1211623001/FT_1211623001.html' },
-            voclosporina: { label: 'Voclosporina', product: 'Lupkynis', url: 'https://cima.aemps.es/cima/dochtml/ft/1221678001/FT_1221678001.html' }
-        };
-        const pathologyDrugSheets = {
-            EA: ['adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'secukinumab', 'ixekizumab', 'upadacitinib'],
-            APs: ['adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'secukinumab', 'ixekizumab', 'ustekinumab', 'apremilast', 'tofacitinib', 'upadacitinib'],
-            AR: ['metotrexato', 'leflunomida', 'sulfasalazina', 'hidroxicloroquina', 'adalimumab', 'certolizumab', 'etanercept', 'golimumab', 'infliximab', 'abatacept', 'rituximab', 'tocilizumab', 'sarilumab', 'tofacitinib', 'baricitinib', 'upadacitinib'],
-            LES: ['hidroxicloroquina', 'azatioprina', 'belimumab', 'anifrolumab', 'voclosporina'],
-            SS: []
-        };
+        const cimaSearchUrl = 'https://cima.aemps.es/cima/publico/home.html#';
         const pregnancyGuideRows = [
             ['AINEs', 'Uso puntual; evitar uso mantenido desde semana 20 y suspender antes de semana 28', 'Generalmente compatibles', 'No aplica preconcepción', 'Preferir vida media corta y revisión obstétrica.'],
             ['COX-2 (celecoxib)', 'Evitar salvo necesidad muy justificada', 'Compatible', 'No aplica preconcepción', 'Datos más limitados que con AINEs no selectivos.'],
@@ -1350,23 +1318,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 });
             });
 
-            if (currentPatient.pathology && pathologyDrugSheets[currentPatient.pathology]) {
+            if (currentPatient.pathology && currentPatient.pathology !== 'VAC') {
                 entries.push({
-                    title: `Fichas técnicas - ${pathologyData[currentPatient.pathology].name}`,
-                    subtitle: 'Panel lateral',
+                    title: `Consultar ficha técnica oficial - ${pathologyData[currentPatient.pathology].name}`,
+                    subtitle: 'CIMA / AEMPS',
                     keywords: ['ficha tecnica', 'cima', 'aemps', 'medicacion', 'farmaco', pathologyData[currentPatient.pathology].name],
-                    action: { kind: 'drugSheets', pathology: currentPatient.pathology }
-                });
-
-                pathologyDrugSheets[currentPatient.pathology].forEach(key => {
-                    const drug = drugSheetCatalog[key];
-                    if (!drug) return;
-                    entries.push({
-                        title: `Ficha técnica - ${drug.label}`,
-                        subtitle: `CIMA / ${pathologyData[currentPatient.pathology].name}`,
-                        keywords: [drug.label, drug.product, 'ficha tecnica', 'cima'],
-                        action: { kind: 'drugSheets', pathology: currentPatient.pathology, focusKey: key }
-                    });
+                    action: { kind: 'cimaSearch' }
                 });
 
                 const sectionEntries = [
@@ -1495,11 +1452,6 @@ Check your Browserslist config to be sure that your targets are set up correctly
             if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function scrollToDrugSheetCard(focusKey) {
-            const target = document.querySelector(`[data-drug-sheet="${focusKey}"]`);
-            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
         function executeQuickSearchAction(action) {
             if (!action) return;
 
@@ -1515,13 +1467,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
             } else if (action.kind === 'special') {
                 openSpecialSituations();
                 showSpecialTab(action.tab);
-            } else if (action.kind === 'drugSheets') {
-                if (action.pathology) {
-                    selectPathology(action.pathology);
-                    if (action.pathology !== 'VAC') selectVisitType('educacion');
-                }
-                openDrugFichaPanel();
-                if (action.focusKey) setTimeout(() => scrollToDrugSheetCard(action.focusKey), 80);
+            } else if (action.kind === 'cimaSearch') {
+                openCimaSearch();
             } else if (action.kind === 'section') {
                 selectPathology(action.pathology);
                 selectVisitType(action.visit);
@@ -1611,12 +1558,12 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <h5 class="font-semibold text-blue-900">Consulta de fichas técnicas CIMA</h5>
-                            <p class="text-xs text-blue-800">Abre un panel lateral con los enlaces oficiales en español de los fármacos relacionados con la patología activa.</p>
+                            <h5 class="font-semibold text-blue-900">Consulta de ficha técnica oficial</h5>
+                            <p class="text-xs text-blue-800">Acceso directo al buscador oficial de fichas técnicas CIMA/AEMPS, para localizar la presentación concreta que se quiera consultar.</p>
                         </div>
-                        <button onclick="openDrugFichaPanel()" class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100">
+                        <button onclick="openCimaSearch()" class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100">
                             <i data-lucide="external-link" class="w-4 h-4"></i>
-                            Consultar fichas técnicas
+                            Consultar ficha técnica
                         </button>
                     </div>
                 </div>
@@ -1653,44 +1600,6 @@ Check your Browserslist config to be sure that your targets are set up correctly
                         </ul>
                     </div>
                     ${renderInfoTable(['Fármaco / clase', 'Conducta perioperatoria', 'Programar cirugía', 'Reinicio', 'Notas'], surgeryGuideRows)}
-                </div>
-            `;
-        }
-        function getDrugSheetPanelContent() {
-            const sheetKeys = pathologyDrugSheets[currentPatient.pathology] || [];
-            if (!sheetKeys.length) {
-                return `
-                    <div class="rounded-lg border border-clinical-200 bg-clinical-50 p-4">
-                        <p class="font-medium text-clinical-900 mb-2">Sin listado específico cargado</p>
-                        <p class="text-sm text-clinical-700">Para esta patología no he cargado una batería cerrada de fichas técnicas en la herramienta. Si quieres, en el siguiente paso puedo añadir un listado específico adicional.</p>
-                    </div>
-                `;
-            }
-            const cards = sheetKeys.map(key => {
-                const item = drugSheetCatalog[key];
-                if (!item) return '';
-                return `
-                    <div data-drug-sheet="${key}" class="rounded-lg border border-clinical-200 bg-white p-4">
-                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <p class="font-semibold text-clinical-900">${item.label}</p>
-                                <p class="text-xs text-clinical-500">Ficha CIMA mostrada con la presentación ${item.product}.</p>
-                            </div>
-                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100">
-                                <i data-lucide="external-link" class="w-4 h-4"></i>
-                                Abrir ficha técnica
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            return `
-                <div class="space-y-4">
-                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
-                        <p class="font-semibold mb-1">Fuentes oficiales AEMPS / CIMA</p>
-                        <p class="text-sm">Listado orientativo de principios activos comercializados y usados en la herramienta para ${currentPatient.pathologyName}. La indicación exacta depende de la ficha concreta y de la presentación seleccionada.</p>
-                    </div>
-                    ${cards}
                 </div>
             `;
         }
@@ -2418,14 +2327,8 @@ Check your Browserslist config to be sure that your targets are set up correctly
             if (active) active.classList.add('active-stab');
             refreshIcons();
         }
-        function openDrugFichaPanel() {
-            const title = document.getElementById('drug-ficha-title');
-            const content = document.getElementById('drug-ficha-content');
-            if (title) title.innerHTML = `<i data-lucide="book-open-text" class="text-blue-700"></i>Fichas técnicas - ${currentPatient.pathologyName || 'Patología activa'}`;
-            if (content) content.innerHTML = getDrugSheetPanelContent();
-            document.getElementById('drug-ficha-panel').classList.remove('translate-x-full');
-            document.getElementById('drug-ficha-backdrop').classList.remove('hidden');
-            refreshIcons();
+        function openCimaSearch() {
+            window.open(cimaSearchUrl, '_blank', 'noopener,noreferrer');
         }
         function closeDrugFichaPanel() {
             document.getElementById('drug-ficha-panel').classList.add('translate-x-full');
