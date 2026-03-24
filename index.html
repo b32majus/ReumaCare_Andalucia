@@ -2038,8 +2038,17 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 ${createSection('Vacunas Inactivadas (RECOMENDADAS)', 'shield-check', `
                     ${createCheckbox('vac_gripe', 'Vacuna Gripe (anual) - Trivalente o cuadrivalente inactivada')}
                     ${createCheckbox('vac_covid', 'Vacuna COVID-19 - Dosis según calendario vigente')}
-                    ${createCheckbox('vac_neumoco_pcv13', 'Neumococo PCV13 (1 dosis si no prevacunado)')}
-                    ${createCheckbox('vac_neumoco_ppsv23', 'Neumococo PPSV23 (1 dosis, 8 semanas después PCV13)')}
+                    ${createCheckbox('vac_neumoco_vnc20', 'Neumococo: valorar VNC20 dosis única como pauta habitual actual')}
+                    ${createCheckbox('vac_neumoco_ajuste_previas', 'Neumococo: si existe vacunación previa (VNC13 y/o VNP23), ajustar la indicación de VNC20 según antecedentes y tiempo desde la última dosis')}
+                    <div class="bg-blue-50 p-3 rounded border border-blue-200 mb-3 text-sm text-blue-900">
+                        <p class="font-semibold mb-2">Escenarios habituales de vacunación antineumocócica</p>
+                        <ul class="space-y-1 list-disc pl-5">
+                            <li>Sin vacunación previa: VNC20 dosis única.</li>
+                            <li>Con VNC13 previa: valorar VNC20, habitualmente con un intervalo de al menos 1 año.</li>
+                            <li>Con VNP23 previa: valorar VNC20 con un intervalo de al menos 1 año.</li>
+                            <li>Con VNC13 + VNP23: revisar tiempo desde la última dosis; en algunos casos puede considerarse correctamente vacunado según guía/protocolo.</li>
+                        </ul>
+                    </div>
                     ${createCheckbox('vac_hep_b', 'Hepatitis B (serie completa o refuerzo)')}
                     ${createCheckbox('vac_vph', 'Vacuna VPH: recomendada especialmente en pacientes con lupus y valorar según calendario y grupos de riesgo; en pacientes inmunocomprometidos puede estar indicada hasta los 45 años con pauta de 3 dosis (0, 1-2, 6 meses), según criterio médico/protocolo')}
                     ${createCheckbox('vac_shingrix', 'Herpes Zoster - Shingrix (2 dosis, 2-6 meses) >50 años')}
