@@ -4,12 +4,6 @@ Herramienta web de apoyo a la consulta de enfermeria reumatologica en Andalucia.
 
 La aplicacion funciona en una unica pagina HTML y centraliza protocolos asistenciales, escalas clinicas, alertas, situaciones especiales, fichas tecnicas oficiales y exportacion de informes.
 
-## Archivo de referencia
-
-- Archivo operativo actual: `index.html`
-- `ReumaCare_vKimi_2.html` es equivalente al `index.html` usado como base de trabajo
-- El resto de HTML de la carpeta son versiones historicas o intermedias
-
 ## Patologias incluidas
 
 - Espondiloartritis Axial (EA)
@@ -36,12 +30,16 @@ La aplicacion funciona en una unica pagina HTML y centraliza protocolos asistenc
 - Badges de resultado en botones de acceso a escalas
 - Alertas clinicas dinamicas segun resultados
 - Situaciones especiales con panel lateral:
-  - infecciones
-  - embarazo y lactancia
-  - cirugia / perioperatorio
-  - riesgo cardiovascular
+  - **Infecciones**: criterios de derivacion urgente y algoritmo fiebre + biologico
+  - **Embarazo y lactancia**: planificacion gestacional, tabla de seguridad de 18 farmacos y recomendaciones EULAR
+  - **Cirugia / perioperatorio**: manejo perioperatorio con tabla de conducta quirurgica por farmaco (guia ACR/AAHKS 2022)
+  - **Riesgo cardiovascular**: checklist de consulta CV (PA, lipidos, IMC, tabaquismo) y farmacos con riesgo CV especifico por patologia
 - Panel lateral de fichas tecnicas oficiales CIMA/AEMPS por patologia
+- Tarjetas educativas por clase de farmaco: anti-TNF, IL-17, IL-12/23, IL-23, IL-6, rituximab, inhibidores JAK, abatacept, deplecion de linfocitos B, IFN, metotrexato, inhibidores de PDE4
 - Buscador rapido para localizar visitas, indices, situaciones especiales, secciones y fichas tecnicas
+- Persistencia de datos de sesion y respuestas de escalas en localStorage
+- Pantalla de bienvenida con configuracion de profesional y centro
+- Identificacion opcional de paciente (nombre e ID/NHC)
 - Exportacion a:
   - PDF
   - informe TXT copiable al portapapeles
